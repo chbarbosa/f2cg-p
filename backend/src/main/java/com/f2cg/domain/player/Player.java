@@ -1,11 +1,13 @@
 package com.f2cg.domain.player;
 
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Transient;
+import org.springframework.data.domain.Persistable;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
 @Table("players")
-public class Player {
+public class Player implements Persistable<String> {
 
     @Id
     private String id;
@@ -13,13 +15,22 @@ public class Player {
     @Column("password_hash")
     private String passwordHash;
 
-    public Player() {}
+    @Transient
+    private boolean isNew;
+
+    public Player() {
+        this.isNew = false;
+    }
 
     public Player(String id, String username, String passwordHash) {
         this.id = id;
         this.username = username;
         this.passwordHash = passwordHash;
+        this.isNew = true;
     }
+
+    @Override
+    public boolean isNew() { return isNew; }
 
     public String getId() { return id; }
     public String getUsername() { return username; }
