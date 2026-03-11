@@ -17,3 +17,6 @@ server:
 jwt:
   secret: change-me-in-production-must-be-at-least-32-chars
   expiration-ms: 86400000  # 24h
+
+cors:
+  allowed-origin: http://localhost:3000
