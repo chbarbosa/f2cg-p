@@ -1,5 +1,7 @@
 package com.f2cg.domain.card;
 
+import com.f2cg.domain.deck.DeckTheme;
+
 import java.util.List;
 
 public record UnitCard(
@@ -7,7 +9,7 @@ public record UnitCard(
         String name,
         int manaCost,
         UnitClass unitClass,
-        String theme,
+        DeckTheme theme,
         int attack,
         int defense,
         List<Ability> abilities
