@@ -1,28 +1,82 @@
 import { useState } from 'react';
-import { login, register } from '../api/auth';
+import { login, register, verifyAccount } from '../api/auth';
 import { useAuthStore } from '../store/authStore';
 
 export function AuthForm() {
   const [tab, setTab] = useState<'login' | 'register'>('login');
-  const [username, setUsername] = useState('');
+  const [step, setStep] = useState<'auth' | 'verify'>('auth');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [code, setCode] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const setAuth = useAuthStore((s) => s.login);
+  const setPendingEmail = useAuthStore((s) => s.setPendingEmail);
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleAuthSubmit(e: React.SyntheticEvent) {
     e.preventDefault();
     setError('');
     setLoading(true);
     try {
-      const fn = tab === 'login' ? login : register;
-      const res = await fn(username, password);
-      setAuth(res.playerId, res.token, username);
+      if (tab === 'login') {
+        const res = await login(email, password);
+        setAuth(res.playerId, res.token, email);
+      } else {
+        await register(email, password);
+        setPendingEmail(email);
+        setStep('verify');
+      }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Something went wrong');
     } finally {
       setLoading(false);
     }
+  }
+
+  async function handleVerifySubmit(e: React.SyntheticEvent) {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+    try {
+      const res = await verifyAccount(email, code);
+      setAuth(res.playerId, res.token, email);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Something went wrong');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  if (step === 'verify') {
+    return (
+      <div style={styles.card}>
+        <h1 style={styles.title}>F2CG</h1>
+        <p style={styles.hint}>A verification code was sent to <strong>{email}</strong></p>
+        <form onSubmit={handleVerifySubmit} style={styles.form}>
+          <input
+            style={styles.input}
+            placeholder="5-digit code"
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+            maxLength={5}
+            pattern="\d{5}"
+            required
+            autoFocus
+          />
+          {error && <p style={styles.error}>{error}</p>}
+          <button style={styles.button} type="submit" disabled={loading}>
+            {loading ? '...' : 'Verify'}
+          </button>
+          <button
+            style={styles.linkButton}
+            type="button"
+            onClick={() => { setStep('auth'); setError(''); setCode(''); }}
+          >
+            Back
+          </button>
+        </form>
+      </div>
+    );
   }
 
   return (
@@ -42,12 +96,13 @@ export function AuthForm() {
           Register
         </button>
       </div>
-      <form onSubmit={handleSubmit} style={styles.form}>
+      <form onSubmit={handleAuthSubmit} style={styles.form}>
         <input
           style={styles.input}
-          placeholder="Username"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
           required
           autoFocus
         />
@@ -80,6 +135,7 @@ const styles: Record<string, React.CSSProperties> = {
     gap: '1rem',
   },
   title: { margin: 0, textAlign: 'center', color: '#cdd6f4', fontSize: '1.5rem' },
+  hint: { margin: 0, color: '#a6adc8', fontSize: '0.85rem', textAlign: 'center' },
   tabs: { display: 'flex', gap: 8 },
   tab: {
     flex: 1,
@@ -112,5 +168,14 @@ const styles: Record<string, React.CSSProperties> = {
     fontWeight: 600,
     fontSize: '0.95rem',
     cursor: 'pointer',
+  },
+  linkButton: {
+    padding: '0.4rem',
+    background: 'none',
+    border: 'none',
+    color: '#a6adc8',
+    fontSize: '0.85rem',
+    cursor: 'pointer',
+    textAlign: 'center',
   },
 };

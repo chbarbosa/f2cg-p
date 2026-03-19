@@ -1,5 +1,6 @@
 package com.f2cg.api;
 
+import com.f2cg.infrastructure.r2dbc.PlayerRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -20,10 +21,16 @@ class DeckControllerTest {
     @Autowired
     private DatabaseClient databaseClient;
 
+    @Autowired
+    private PlayerRepository playerRepository;
+
     private static final String REGISTER_URL = "/api/auth/register";
+    private static final String VERIFY_URL   = "/api/auth/verify";
     private static final String LOGIN_URL    = "/api/auth/login";
     private static final String DECKS_URL    = "/api/decks";
     private static final String CARDS_URL    = "/api/cards";
+
+    private static final String DECK_USER = "deckuser@test.com";
 
     private String token;
 
@@ -34,17 +41,23 @@ class DeckControllerTest {
 
         webTestClient.post().uri(REGISTER_URL)
                 .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue("""
-                        {"username":"deckuser","password":"pass123"}
-                        """)
+                .bodyValue("{\"username\":\"" + DECK_USER + "\",\"password\":\"pass123\"}")
                 .exchange()
                 .expectStatus().isCreated();
 
+        String code = playerRepository.findByUsername(DECK_USER)
+                .map(p -> p.getActivationCode())
+                .block();
+
+        webTestClient.post().uri(VERIFY_URL)
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue("{\"email\":\"" + DECK_USER + "\",\"code\":\"" + code + "\"}")
+                .exchange()
+                .expectStatus().isOk();
+
         var loginResult = webTestClient.post().uri(LOGIN_URL)
                 .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue("""
-                        {"username":"deckuser","password":"pass123"}
-                        """)
+                .bodyValue("{\"username\":\"" + DECK_USER + "\",\"password\":\"pass123\"}")
                 .exchange()
                 .expectStatus().isOk()
                 .expectBody()

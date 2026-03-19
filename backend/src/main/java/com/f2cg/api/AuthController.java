@@ -3,6 +3,8 @@ package com.f2cg.api;
 import com.f2cg.api.dto.AuthResponse;
 import com.f2cg.api.dto.LoginRequest;
 import com.f2cg.api.dto.RegisterRequest;
+import com.f2cg.api.dto.RegisterResponse;
+import com.f2cg.api.dto.VerifyRequest;
 import com.f2cg.application.PlayerService;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -20,8 +22,13 @@ public class AuthController {
 
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
-    public Mono<AuthResponse> register(@RequestBody RegisterRequest request) {
+    public Mono<RegisterResponse> register(@RequestBody RegisterRequest request) {
         return playerService.register(request.username(), request.password());
+    }
+
+    @PostMapping("/verify")
+    public Mono<AuthResponse> verify(@RequestBody VerifyRequest request) {
+        return playerService.verify(request.email(), request.code());
     }
 
     @PostMapping("/login")

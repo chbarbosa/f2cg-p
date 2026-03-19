@@ -1,7 +1,10 @@
 CREATE TABLE IF NOT EXISTS players (
-    id            VARCHAR(36)  PRIMARY KEY,
-    username      VARCHAR(50)  NOT NULL UNIQUE,
-    password_hash VARCHAR(60)  NOT NULL
+    id                       VARCHAR(36)   PRIMARY KEY,
+    username                 VARCHAR(100)  NOT NULL UNIQUE,
+    password_hash            VARCHAR(60)   NOT NULL,
+    active                   BOOLEAN       NOT NULL DEFAULT FALSE,
+    activation_code          VARCHAR(5),
+    activation_code_expires  TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS cards (
