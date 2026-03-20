@@ -46,7 +46,7 @@ public class PlayerService {
                     String hash = passwordEncoder.encode(password);
                     String code = String.format("%05d", random.nextInt(100000));
                     LocalDateTime expires = LocalDateTime.now().plusMinutes(15);
-                    Player player = new Player(id, email, hash, false, code, expires);
+                    Player player = new Player(id, email, hash, false, code, expires, null, null);
                     return playerRepository.save(player)
                             .doOnNext(p -> emailService.sendVerificationCode(email, code))
                             .thenReturn(new RegisterResponse("VERIFICATION_SENT"));
@@ -69,7 +69,7 @@ public class PlayerService {
                     player.setActivationCode(null);
                     player.setActivationCodeExpires(null);
                     return playerRepository.save(player)
-                            .map(p -> new AuthResponse(p.getId(), jwtUtil.generate(p.getId())));
+                            .map(p -> new AuthResponse(p.getId(), jwtUtil.generate(p.getId()), p.getNickname(), p.getCountry()));
                 });
     }
 
@@ -84,7 +84,18 @@ public class PlayerService {
                     if (!player.isActive()) {
                         return Mono.error(new ResponseStatusException(HttpStatus.FORBIDDEN, "Account not activated"));
                     }
-                    return Mono.just(new AuthResponse(player.getId(), jwtUtil.generate(player.getId())));
+                    return Mono.just(new AuthResponse(player.getId(), jwtUtil.generate(player.getId()), player.getNickname(), player.getCountry()));
                 });
+    }
+
+    public Mono<Void> updateProfile(String playerId, String nickname, String country) {
+        return playerRepository.findById(playerId)
+                .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Player not found")))
+                .flatMap(player -> {
+                    player.setNickname(nickname != null && !nickname.isBlank() ? nickname.trim() : null);
+                    player.setCountry(country != null && !country.isBlank() ? country.trim() : null);
+                    return playerRepository.save(player);
+                })
+                .then();
     }
 }

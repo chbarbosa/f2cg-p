@@ -21,6 +21,8 @@ public class Player implements Persistable<String> {
     private String activationCode;
     @Column("activation_code_expires")
     private LocalDateTime activationCodeExpires;
+    private String nickname;
+    private String country;
 
     @Transient
     private boolean isNew;
@@ -30,13 +32,16 @@ public class Player implements Persistable<String> {
     }
 
     public Player(String id, String username, String passwordHash,
-                  boolean active, String activationCode, LocalDateTime activationCodeExpires) {
+                  boolean active, String activationCode, LocalDateTime activationCodeExpires,
+                  String nickname, String country) {
         this.id = id;
         this.username = username;
         this.passwordHash = passwordHash;
         this.active = active;
         this.activationCode = activationCode;
         this.activationCodeExpires = activationCodeExpires;
+        this.nickname = nickname;
+        this.country = country;
         this.isNew = true;
     }
 
@@ -56,4 +61,8 @@ public class Player implements Persistable<String> {
     public void setActive(boolean active) { this.active = active; }
     public void setActivationCode(String activationCode) { this.activationCode = activationCode; }
     public void setActivationCodeExpires(LocalDateTime activationCodeExpires) { this.activationCodeExpires = activationCodeExpires; }
+    public String getNickname() { return nickname; }
+    public String getCountry() { return country; }
+    public void setNickname(String nickname) { this.nickname = nickname; }
+    public void setCountry(String country) { this.country = country; }
 }

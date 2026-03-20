@@ -1,17 +1,19 @@
 import { useEffect, useState } from 'react';
 import { AuthForm } from './components/AuthForm';
+import { ConfigScreen } from './components/ConfigScreen';
 import { DeckBuilder } from './components/DeckBuilder';
 import { DeckList } from './components/DeckList';
 import { DeckSelector } from './components/DeckSelector';
+import { ProfileSetup } from './components/ProfileSetup';
 import { QueueWaiting } from './components/QueueWaiting';
 import { useAuthStore } from './store/authStore';
 import { useDeckStore } from './store/deckStore';
 import { useQueueStore } from './store/queueStore';
 
-type View = 'home' | 'deckList' | 'deckBuilder' | 'deckSelector' | 'queueWaiting';
+type View = 'home' | 'deckList' | 'deckBuilder' | 'profileSetup' | 'deckSelector' | 'queueWaiting' | 'config';
 
 export default function App() {
-  const { username, playerId, logout } = useAuthStore();
+  const { username, playerId, nickname, logout } = useAuthStore();
   const { decks, fetchDecks } = useDeckStore();
   const { join, clearEntry } = useQueueStore();
   const [view, setView] = useState<View>('home');
@@ -55,6 +57,18 @@ export default function App() {
       );
     }
 
+    if (view === 'profileSetup') {
+      return (
+        <div style={styles.center}>
+          <ProfileSetup onDone={() => setView('deckSelector')} />
+        </div>
+      );
+    }
+
+    if (view === 'config') {
+      return <ConfigScreen onBack={() => setView('home')} />;
+    }
+
     if (view === 'deckSelector') {
       return (
         <div style={styles.page}>
@@ -79,12 +93,14 @@ export default function App() {
             <button
               style={hasPlayableDeck ? styles.playBtn : { ...styles.playBtn, opacity: 0.4, cursor: 'not-allowed' }}
               disabled={!hasPlayableDeck}
-              onClick={() => setView('deckSelector')}
+              onClick={() => setView(nickname ? 'deckSelector' : 'profileSetup')}
             >
               Play
             </button>
           </div>
           <button style={styles.deckBtn} onClick={handleListDecks}>My Decks</button>
+          <button style={styles.deckBtn} disabled>Store</button>
+          <button style={styles.deckBtn} onClick={() => setView('config')}>Config</button>
           <button style={styles.logoutBtn} onClick={handleLogout}>Logout</button>
         </div>
       </div>

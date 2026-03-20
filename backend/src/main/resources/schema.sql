@@ -4,7 +4,9 @@ CREATE TABLE IF NOT EXISTS players (
     password_hash            VARCHAR(60)   NOT NULL,
     active                   BOOLEAN       NOT NULL DEFAULT FALSE,
     activation_code          VARCHAR(5),
-    activation_code_expires  TIMESTAMP
+    activation_code_expires  TIMESTAMP,
+    nickname                 VARCHAR(20),
+    country                  VARCHAR(2)
 );
 
 CREATE TABLE IF NOT EXISTS cards (

@@ -20,7 +20,7 @@ export function AuthForm() {
     try {
       if (tab === 'login') {
         const res = await login(email, password);
-        setAuth(res.playerId, res.token, email);
+        setAuth(res.playerId, res.token, email, res.nickname ?? null, res.country ?? null);
       } else {
         await register(email, password);
         setPendingEmail(email);
@@ -39,7 +39,7 @@ export function AuthForm() {
     setLoading(true);
     try {
       const res = await verifyAccount(email, code);
-      setAuth(res.playerId, res.token, email);
+      setAuth(res.playerId, res.token, email, res.nickname ?? null, res.country ?? null);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Something went wrong');
     } finally {

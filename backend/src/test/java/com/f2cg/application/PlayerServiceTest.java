@@ -64,7 +64,7 @@ class PlayerServiceTest {
 
     @Test
     void register_duplicateEmail_returnsConflict() {
-        Player existing = new Player("id-1", "alice@example.com", "hash", true, null, null);
+        Player existing = new Player("id-1", "alice@example.com", "hash", true, null, null, null, null);
         when(playerRepository.findByUsername("alice@example.com")).thenReturn(Mono.just(existing));
 
         StepVerifier.create(playerService.register("alice@example.com", "pass123"))
@@ -79,7 +79,7 @@ class PlayerServiceTest {
     @Test
     void verify_success() {
         Player player = new Player("id-1", "alice@example.com", "hash",
-                false, "12345", LocalDateTime.now().plusMinutes(10));
+                false, "12345", LocalDateTime.now().plusMinutes(10), null, null);
         when(playerRepository.findByUsername("alice@example.com")).thenReturn(Mono.just(player));
         when(playerRepository.save(any(Player.class)))
                 .thenAnswer(inv -> Mono.just(inv.getArgument(0)));
@@ -96,7 +96,7 @@ class PlayerServiceTest {
     @Test
     void verify_wrongCode_returnsBadRequest() {
         Player player = new Player("id-1", "alice@example.com", "hash",
-                false, "12345", LocalDateTime.now().plusMinutes(10));
+                false, "12345", LocalDateTime.now().plusMinutes(10), null, null);
         when(playerRepository.findByUsername("alice@example.com")).thenReturn(Mono.just(player));
 
         StepVerifier.create(playerService.verify("alice@example.com", "99999"))
@@ -109,7 +109,7 @@ class PlayerServiceTest {
     @Test
     void verify_expiredCode_returnsBadRequest() {
         Player player = new Player("id-1", "alice@example.com", "hash",
-                false, "12345", LocalDateTime.now().minusMinutes(1));
+                false, "12345", LocalDateTime.now().minusMinutes(1), null, null);
         when(playerRepository.findByUsername("alice@example.com")).thenReturn(Mono.just(player));
 
         StepVerifier.create(playerService.verify("alice@example.com", "12345"))
@@ -125,7 +125,7 @@ class PlayerServiceTest {
     void login_success() {
         String rawPassword = "pass123";
         String hash = new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder().encode(rawPassword);
-        Player player = new Player("id-1", "alice@example.com", hash, true, null, null);
+        Player player = new Player("id-1", "alice@example.com", hash, true, null, null, null, null);
 
         when(playerRepository.findByUsername("alice@example.com")).thenReturn(Mono.just(player));
         when(jwtUtil.generate("id-1")).thenReturn("token-xyz");
@@ -143,7 +143,7 @@ class PlayerServiceTest {
         String rawPassword = "pass123";
         String hash = new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder().encode(rawPassword);
         Player player = new Player("id-1", "alice@example.com", hash, false, "12345",
-                LocalDateTime.now().plusMinutes(10));
+                LocalDateTime.now().plusMinutes(10), null, null);
 
         when(playerRepository.findByUsername("alice@example.com")).thenReturn(Mono.just(player));
 
@@ -157,7 +157,7 @@ class PlayerServiceTest {
     @Test
     void login_wrongPassword_returnsUnauthorized() {
         String hash = new org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder().encode("correct");
-        Player player = new Player("id-1", "alice@example.com", hash, true, null, null);
+        Player player = new Player("id-1", "alice@example.com", hash, true, null, null, null, null);
 
         when(playerRepository.findByUsername("alice@example.com")).thenReturn(Mono.just(player));
 

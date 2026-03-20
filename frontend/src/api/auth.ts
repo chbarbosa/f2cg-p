@@ -1,6 +1,8 @@
 export interface AuthResponse {
   playerId: string;
   token: string;
+  nickname: string | null;
+  country: string | null;
 }
 
 export interface RegisterResponse {

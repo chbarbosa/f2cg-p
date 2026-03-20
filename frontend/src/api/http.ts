@@ -38,6 +38,18 @@ export async function put<T>(url: string, body: object): Promise<T> {
   return handleResponse<T>(res);
 }
 
+export async function putVoid(url: string, body: object): Promise<void> {
+  const res = await fetch(url, {
+    method: 'PUT',
+    headers: authHeaders(),
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(text || res.statusText);
+  }
+}
+
 export async function del(url: string): Promise<void> {
   const res = await fetch(url, { method: 'DELETE', headers: authHeaders() });
   if (!res.ok) {
