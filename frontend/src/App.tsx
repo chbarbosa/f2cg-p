@@ -32,6 +32,7 @@ export default function App() {
 
   const handleEditDeck = () => setView('deckBuilder');
   const handleListDecks = () => setView('deckList');
+  const handleHome = () => setView('home');
 
   const handleReady = async (deckId: string) => {
     await join(deckId);
@@ -66,7 +67,7 @@ export default function App() {
     }
 
     if (view === 'config') {
-      return <ConfigScreen onBack={() => setView('home')} />;
+      return <ConfigScreen onBack={handleHome} />;
     }
 
     if (view === 'deckSelector') {
@@ -74,14 +75,14 @@ export default function App() {
         <div style={styles.page}>
           <DeckSelector
             onReady={handleReady}
-            onBack={() => setView('home')}
+            onBack={handleHome}
           />
         </div>
       );
     }
 
     if (view === 'queueWaiting') {
-      return <QueueWaiting onCancelled={() => { clearEntry(); setView('home'); }} />;
+      return <QueueWaiting onCancelled={() => { clearEntry(); handleHome(); }} />;
     }
 
     return (
@@ -166,6 +167,7 @@ const styles: Record<string, React.CSSProperties> = {
     background: '#89b4fa',
     color: '#1e1e2e',
     fontWeight: 600,
+    fontSize: '1rem',
     cursor: 'pointer',
     width: '100%',
   },
@@ -176,6 +178,7 @@ const styles: Record<string, React.CSSProperties> = {
     background: '#f38ba8',
     color: '#1e1e2e',
     fontWeight: 600,
+    fontSize: '1rem',
     cursor: 'pointer',
     width: '100%',
   },
