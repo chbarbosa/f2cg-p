@@ -41,3 +41,13 @@ export interface UpdateDeckRequest {
   theme: DeckTheme;
   cardIds: string[];
 }
+
+export type QueueStatus = 'WAITING' | 'MATCHED' | 'CANCELLED';
+
+export interface QueueEntryResponse {
+  id: string;
+  playerId: string;
+  deckId: string;
+  status: QueueStatus;
+  joinedAt: string;
+}

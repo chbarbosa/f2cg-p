@@ -30,3 +30,11 @@ CREATE TABLE IF NOT EXISTS decks (
     created_at  TIMESTAMP     NOT NULL,
     updated_at  TIMESTAMP     NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS queue_entries (
+    id          VARCHAR(36)  PRIMARY KEY,
+    player_id   VARCHAR(36)  NOT NULL REFERENCES players(id),
+    deck_id     VARCHAR(36)  NOT NULL REFERENCES decks(id),
+    status      VARCHAR(10)  NOT NULL DEFAULT 'WAITING',
+    joined_at   TIMESTAMP    NOT NULL
+);

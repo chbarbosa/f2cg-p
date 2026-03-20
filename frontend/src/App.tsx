@@ -1,22 +1,42 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { AuthForm } from './components/AuthForm';
 import { DeckBuilder } from './components/DeckBuilder';
 import { DeckList } from './components/DeckList';
+import { DeckSelector } from './components/DeckSelector';
+import { QueueWaiting } from './components/QueueWaiting';
 import { useAuthStore } from './store/authStore';
+import { useDeckStore } from './store/deckStore';
+import { useQueueStore } from './store/queueStore';
 
-type View = 'home' | 'deckList' | 'deckBuilder';
+type View = 'home' | 'deckList' | 'deckBuilder' | 'deckSelector' | 'queueWaiting';
 
 export default function App() {
   const { username, playerId, logout } = useAuthStore();
+  const { decks, fetchDecks } = useDeckStore();
+  const { join, clearEntry } = useQueueStore();
   const [view, setView] = useState<View>('home');
+
+  useEffect(() => {
+    if (username && view === 'home') {
+      fetchDecks();
+    }
+  }, [username, view, fetchDecks]);
 
   const handleLogout = () => {
     logout();
+    clearEntry();
     setView('home');
   };
 
   const handleEditDeck = () => setView('deckBuilder');
   const handleListDecks = () => setView('deckList');
+
+  const handleReady = async (deckId: string) => {
+    await join(deckId);
+    setView('queueWaiting');
+  };
+
+  const hasPlayableDeck = decks.some(d => d.status === 'PLAYABLE');
 
   if (username) {
     if (view === 'deckList') {
@@ -35,11 +55,35 @@ export default function App() {
       );
     }
 
+    if (view === 'deckSelector') {
+      return (
+        <div style={styles.page}>
+          <DeckSelector
+            onReady={handleReady}
+            onBack={() => setView('home')}
+          />
+        </div>
+      );
+    }
+
+    if (view === 'queueWaiting') {
+      return <QueueWaiting onCancelled={() => { clearEntry(); setView('home'); }} />;
+    }
+
     return (
       <div style={styles.center}>
         <div style={styles.card}>
           <h2 style={styles.welcome}>Welcome, {username}!</h2>
           <p style={styles.sub}>Player ID: <code style={styles.code}>{playerId}</code></p>
+          <div style={styles.playWrapper} title={!hasPlayableDeck ? 'You need at least one playable deck to battle' : undefined}>
+            <button
+              style={hasPlayableDeck ? styles.playBtn : { ...styles.playBtn, opacity: 0.4, cursor: 'not-allowed' }}
+              disabled={!hasPlayableDeck}
+              onClick={() => setView('deckSelector')}
+            >
+              Play
+            </button>
+          </div>
           <button style={styles.deckBtn} onClick={handleListDecks}>My Decks</button>
           <button style={styles.logoutBtn} onClick={handleLogout}>Logout</button>
         </div>
@@ -86,6 +130,18 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: 4,
     color: '#89dceb',
     fontSize: '0.8rem',
+  },
+  playWrapper: { width: '100%' },
+  playBtn: {
+    padding: '0.5rem 1.5rem',
+    borderRadius: 6,
+    border: 'none',
+    background: '#a6e3a1',
+    color: '#1e1e2e',
+    fontWeight: 700,
+    fontSize: '1rem',
+    cursor: 'pointer',
+    width: '100%',
   },
   deckBtn: {
     padding: '0.5rem 1.5rem',
