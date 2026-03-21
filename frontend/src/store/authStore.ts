@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
 interface AuthState {
   playerId: string | null;
@@ -14,7 +15,7 @@ interface AuthState {
   clearPendingEmail: () => void;
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
+export const useAuthStore = create<AuthState>()(persist((set) => ({
   playerId: null,
   token: null,
   username: null,
@@ -27,4 +28,4 @@ export const useAuthStore = create<AuthState>((set) => ({
   logout: () => set({ playerId: null, token: null, username: null, nickname: null, country: null, pendingEmail: null }),
   setPendingEmail: (email) => set({ pendingEmail: email }),
   clearPendingEmail: () => set({ pendingEmail: null }),
-}));
+}), { name: 'auth' }));
