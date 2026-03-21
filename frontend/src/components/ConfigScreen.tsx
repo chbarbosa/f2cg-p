@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { updateProfile } from '../api/player';
 import { useAuthStore } from '../store/authStore';
+import { CountrySelect } from './CountrySelect';
 
 interface Props {
   onBack: () => void;
@@ -47,12 +48,10 @@ export function ConfigScreen({ onBack }: Props) {
             maxLength={20}
           />
           <label style={styles.label}>Country</label>
-          <input
-            style={styles.input}
-            placeholder="Country code (e.g. US)"
+          <CountrySelect
             value={country}
-            onChange={(e) => { setCountry(e.target.value.toUpperCase()); setSaved(false); }}
-            maxLength={2}
+            onChange={(code) => { setCountry(code); setSaved(false); }}
+            inputStyle={styles.input}
           />
           {error && <p style={styles.error}>{error}</p>}
           {saved && <p style={styles.success}>Saved!</p>}

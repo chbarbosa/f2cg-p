@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { updateProfile } from '../api/player';
 import { useAuthStore } from '../store/authStore';
+import { CountrySelect } from './CountrySelect';
 
 interface Props {
   onDone: () => void;
@@ -12,6 +13,7 @@ export function ProfileSetup({ onDone }: Props) {
   const [country, setCountry] = useState(
     () => navigator.language.split('-')[1]?.toUpperCase() ?? ''
   );
+
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -44,12 +46,10 @@ export function ProfileSetup({ onDone }: Props) {
           required
           autoFocus
         />
-        <input
-          style={styles.input}
-          placeholder="Country code (e.g. US)"
+        <CountrySelect
           value={country}
-          onChange={(e) => setCountry(e.target.value.toUpperCase())}
-          maxLength={2}
+          onChange={setCountry}
+          inputStyle={styles.input}
           required
         />
         {error && <p style={styles.error}>{error}</p>}
