@@ -99,8 +99,14 @@ export default function App() {
               Play
             </button>
           </div>
+          <div style={styles.playWrapper} title={!hasPlayableDeck ? 'You need at least one playable deck to battle' : undefined}>
+            <button style={hasPlayableDeck ? styles.playBtn : { ...styles.playBtn, opacity: 0.4, cursor: 'not-allowed' }} disabled>
+              Pratique
+            </button>
+          </div>
           <button style={styles.deckBtn} onClick={handleListDecks}>My Decks</button>
           <button style={styles.disabledBtn} disabled>Store</button>
+          <button style={styles.disabledBtn} disabled>Performance</button>
           <button style={styles.deckBtn} onClick={() => setView('config')}>Config</button>
           <button style={styles.logoutBtn} onClick={handleLogout}>Logout</button>
         </div>
