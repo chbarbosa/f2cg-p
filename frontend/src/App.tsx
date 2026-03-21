@@ -100,7 +100,7 @@ export default function App() {
             </button>
           </div>
           <button style={styles.deckBtn} onClick={handleListDecks}>My Decks</button>
-          <button style={styles.deckBtn} disabled>Store</button>
+          <button style={styles.disabledBtn} disabled>Store</button>
           <button style={styles.deckBtn} onClick={() => setView('config')}>Config</button>
           <button style={styles.logoutBtn} onClick={handleLogout}>Logout</button>
         </div>
@@ -170,6 +170,18 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: '1rem',
     cursor: 'pointer',
     width: '100%',
+  },
+  disabledBtn: {
+    padding: '0.5rem 1.5rem',
+    borderRadius: 6,
+    border: 'none',
+    background: '#313244',
+    color: '#585b70',
+    fontWeight: 600,
+    fontSize: '1rem',
+    cursor: 'not-allowed',
+    width: '100%',
+    opacity: 0.6,
   },
   logoutBtn: {
     padding: '0.5rem 1.5rem',
