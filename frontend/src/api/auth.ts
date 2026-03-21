@@ -1,3 +1,5 @@
+import { ApiError } from './errors';
+
 export interface AuthResponse {
   playerId: string;
   token: string;
@@ -17,7 +19,9 @@ async function postAuth<T>(url: string, body: object): Promise<T> {
   });
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(text || res.statusText);
+    let message = res.statusText;
+    try { message = JSON.parse(text).message || message; } catch { message = text || message; }
+    throw new ApiError(res.status, message);
   }
   return res.json();
 }

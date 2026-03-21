@@ -1,5 +1,24 @@
 *, *::before, *::after { box-sizing: border-box; }
 
+.error-box {
+  background-color: #7a4c58 !important;
+  border: 1px solid #f38ba8;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-start;
+  color: #f38ba8 !important;
+  text-align: left;
+}
+
+.error-box p {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  color: #f38ba8 !important;
+}
+
 @keyframes spin {
   to { transform: rotate(360deg); }
 }

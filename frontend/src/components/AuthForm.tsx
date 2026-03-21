@@ -1,6 +1,24 @@
 import { useState } from 'react';
+import { ApiError } from '../api/errors';
 import { login, register, verifyAccount } from '../api/auth';
 import { useAuthStore } from '../store/authStore';
+import { ErrorMessage } from './ErrorMessage';
+
+function toFriendlyError(err: unknown, context: 'login' | 'register' | 'verify'): string {
+  if (err instanceof ApiError) {
+    if (err.status === 401)
+      return 'Invalid credentials. Please check your email and password, or create a new account.';
+    if (err.status === 403)
+      return 'Your account is not activated yet. Check your email for the verification code.';
+    if (err.status === 409)
+      return 'This email is already registered. Try logging in instead.';
+    if (err.status === 400 && context === 'verify')
+      return 'Invalid or expired code. Please check the code sent to your email.';
+    if (err.status === 400)
+      return 'Invalid email format.';
+  }
+  return 'Something went wrong. Please try again.';
+}
 
 export function AuthForm() {
   const [tab, setTab] = useState<'login' | 'register'>('login');
@@ -27,7 +45,7 @@ export function AuthForm() {
         setStep('verify');
       }
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Something went wrong');
+      setError(toFriendlyError(err, tab === 'login' ? 'login' : 'register'));
     } finally {
       setLoading(false);
     }
@@ -41,7 +59,7 @@ export function AuthForm() {
       const res = await verifyAccount(email, code);
       setAuth(res.playerId, res.token, email, res.nickname ?? null, res.country ?? null);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Something went wrong');
+      setError(toFriendlyError(err, 'verify'));
     } finally {
       setLoading(false);
     }
@@ -63,7 +81,7 @@ export function AuthForm() {
             required
             autoFocus
           />
-          {error && <p style={styles.error}>{error}</p>}
+          {error && <ErrorMessage message={error} />}
           <button style={styles.button} type="submit" disabled={loading}>
             {loading ? '...' : 'Verify'}
           </button>
@@ -114,7 +132,7 @@ export function AuthForm() {
           onChange={(e) => setPassword(e.target.value)}
           required
         />
-        {error && <p style={styles.error}>{error}</p>}
+        {error && <ErrorMessage message={error} />}
         <button style={styles.button} type="submit" disabled={loading}>
           {loading ? '...' : tab === 'login' ? 'Login' : 'Register'}
         </button>
@@ -158,7 +176,6 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: '0.95rem',
     outline: 'none',
   },
-  error: { margin: 0, color: '#f38ba8', fontSize: '0.85rem' },
   button: {
     padding: '0.6rem',
     borderRadius: 6,

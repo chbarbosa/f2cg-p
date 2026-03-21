@@ -1,3 +1,4 @@
+import { ApiError } from './errors';
 import { useAuthStore } from '../store/authStore';
 
 function authHeaders(): Record<string, string> {
@@ -7,11 +8,15 @@ function authHeaders(): Record<string, string> {
     : { 'Content-Type': 'application/json' };
 }
 
+async function extractError(res: Response): Promise<never> {
+  const text = await res.text();
+  let message = res.statusText;
+  try { message = JSON.parse(text).message || message; } catch { message = text || message; }
+  throw new ApiError(res.status, message);
+}
+
 async function handleResponse<T>(res: Response): Promise<T> {
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(text || res.statusText);
-  }
+  if (!res.ok) return extractError(res);
   return res.json() as Promise<T>;
 }
 
@@ -44,16 +49,10 @@ export async function putVoid(url: string, body: object): Promise<void> {
     headers: authHeaders(),
     body: JSON.stringify(body),
   });
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(text || res.statusText);
-  }
+  if (!res.ok) return extractError(res);
 }
 
 export async function del(url: string): Promise<void> {
   const res = await fetch(url, { method: 'DELETE', headers: authHeaders() });
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(text || res.statusText);
-  }
+  if (!res.ok) return extractError(res);
 }
