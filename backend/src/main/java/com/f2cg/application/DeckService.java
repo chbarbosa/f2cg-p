@@ -18,9 +18,12 @@ import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 @Service
 public class DeckService {
+
+    private static final Pattern HTML_CHARS = Pattern.compile("[<>\"'&]");
 
     private final DeckRepository deckRepository;
     private final CardRepository cardRepository;
@@ -63,6 +66,9 @@ public class DeckService {
     }
 
     public Mono<Deck> createDeck(String playerId, String name, String themeStr, List<String> cardIds) {
+        Mono<Deck> nameErr = validateDeckName(name);
+        if (nameErr != null) return nameErr;
+
         List<String> ids = cardIds != null ? cardIds : List.of();
 
         if (new HashSet<>(ids).size() != ids.size()) {
@@ -116,6 +122,9 @@ public class DeckService {
 
     public Mono<Deck> updateDeck(String deckId, String playerId, String name,
                                  String themeStr, List<String> cardIds) {
+        Mono<Deck> nameErr = validateDeckName(name);
+        if (nameErr != null) return nameErr;
+
         List<String> ids = cardIds != null ? cardIds : List.of();
 
         if (new HashSet<>(ids).size() != ids.size()) {
@@ -174,6 +183,16 @@ public class DeckService {
                     }
                     return deckRepository.delete(entity);
                 });
+    }
+
+    private <T> Mono<T> validateDeckName(String name) {
+        if (name == null || name.isBlank())
+            return Mono.error(new ResponseStatusException(HttpStatus.BAD_REQUEST, "Deck name is required"));
+        if (name.trim().length() > 50)
+            return Mono.error(new ResponseStatusException(HttpStatus.BAD_REQUEST, "Deck name too long (max 50)"));
+        if (HTML_CHARS.matcher(name.trim()).find())
+            return Mono.error(new ResponseStatusException(HttpStatus.BAD_REQUEST, "Deck name contains invalid characters"));
+        return null;
     }
 
     private Mono<Deck> saveUpdated(DeckEntity entity, String name, DeckTheme theme, List<String> ids) {

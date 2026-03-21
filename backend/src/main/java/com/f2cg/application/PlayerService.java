@@ -21,6 +21,7 @@ public class PlayerService {
 
     private static final Pattern EMAIL_PATTERN =
             Pattern.compile("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$");
+    private static final Pattern HTML_CHARS = Pattern.compile("[<>\"'&]");
 
     private final PlayerRepository playerRepository;
     private final JwtUtil jwtUtil;
@@ -89,6 +90,24 @@ public class PlayerService {
     }
 
     public Mono<Void> updateProfile(String playerId, String nickname, String country) {
+        if (nickname != null && !nickname.isBlank()) {
+            String n = nickname.trim();
+            if (n.length() > 30) {
+                return Mono.error(new ResponseStatusException(HttpStatus.BAD_REQUEST, "Nickname too long (max 30)"));
+            }
+            if (HTML_CHARS.matcher(n).find()) {
+                return Mono.error(new ResponseStatusException(HttpStatus.BAD_REQUEST, "Nickname contains invalid characters"));
+            }
+        }
+        if (country != null && !country.isBlank()) {
+            String c = country.trim();
+            if (c.length() > 60) {
+                return Mono.error(new ResponseStatusException(HttpStatus.BAD_REQUEST, "Country too long (max 60)"));
+            }
+            if (HTML_CHARS.matcher(c).find()) {
+                return Mono.error(new ResponseStatusException(HttpStatus.BAD_REQUEST, "Country contains invalid characters"));
+            }
+        }
         return playerRepository.findById(playerId)
                 .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Player not found")))
                 .flatMap(player -> {
