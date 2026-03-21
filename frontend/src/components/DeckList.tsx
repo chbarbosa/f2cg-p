@@ -2,11 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { useDeckStore } from '../store/deckStore';
 
 interface Props {
+  onBack: () => void;
   onNew: () => void;
   onEdit: (id: string) => void;
 }
 
-export function DeckList({ onNew, onEdit }: Props) {
+export function DeckList({ onBack, onNew, onEdit }: Props) {
   const { decks, loadingDecks, decksError, fetchDecks, deletePlayerDeck, initNewDeck, loadDeckForEdit } = useDeckStore();
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
@@ -22,7 +23,10 @@ export function DeckList({ onNew, onEdit }: Props) {
   return (
     <div style={styles.container}>
       <div style={styles.header}>
-        <h2 style={styles.title}>My Decks</h2>
+        <div style={styles.titleRow}>
+          <button style={styles.backBtn} onClick={onBack}>← Back</button>
+          <h2 style={styles.title}>My Decks</h2>
+        </div>
         <button
           style={decks.length >= 7 ? { ...styles.newBtn, opacity: 0.4, cursor: 'not-allowed' } : styles.newBtn}
           disabled={decks.length >= 7}
@@ -96,7 +100,17 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: 'center',
     marginBottom: '1.5rem',
   },
+  titleRow: { display: 'flex', alignItems: 'center', gap: '0.75rem' },
   title: { margin: 0, color: '#cdd6f4', fontSize: '1.4rem' },
+  backBtn: {
+    padding: '0.3rem 0.8rem',
+    borderRadius: 6,
+    border: 'none',
+    background: '#313244',
+    color: '#cdd6f4',
+    cursor: 'pointer',
+    fontSize: '0.9rem',
+  },
   newBtn: {
     padding: '0.5rem 1.2rem',
     borderRadius: 6,

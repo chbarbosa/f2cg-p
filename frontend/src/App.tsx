@@ -45,7 +45,7 @@ export default function App() {
     if (view === 'deckList') {
       return (
         <div style={styles.page}>
-          <DeckList onNew={handleEditDeck} onEdit={handleEditDeck} />
+          <DeckList onBack={handleHome} onNew={handleEditDeck} onEdit={handleEditDeck} />
         </div>
       );
     }
