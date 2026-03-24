@@ -44,6 +44,30 @@ export interface UpdateDeckRequest {
 
 export type QueueStatus = 'WAITING' | 'MATCHED' | 'CANCELLED';
 
+export type PlayerRank = 'ELITE' | 'ADVANCED' | 'INTERMEDIATE' | 'ROOKIE' | 'PENDING';
+export type SeasonPhase = 'FREE' | 'RANKED';
+
+export interface SeasonSummary {
+  id: string;
+  year: number;
+  seasonNumber: number;
+  name: string | null;
+  startDate: string;
+  endDate: string;
+  phase2StartDate: string;
+}
+
+export interface PerformanceResponse {
+  season: SeasonSummary;
+  currentPhase: SeasonPhase | null;
+  rank: PlayerRank;
+  highestRank: PlayerRank;
+  totalMatches: number;
+  victories: number;
+  defeats: number;
+  matchesThisWeek: number;
+}
+
 export interface QueueEntryResponse {
   id: string;
   playerId: string;

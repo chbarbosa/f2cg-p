@@ -6,11 +6,12 @@ import { DeckList } from './components/DeckList';
 import { DeckSelector } from './components/DeckSelector';
 import { ProfileSetup } from './components/ProfileSetup';
 import { QueueWaiting } from './components/QueueWaiting';
+import { PerformanceScreen } from './components/PerformanceScreen';
 import { useAuthStore } from './store/authStore';
 import { useDeckStore } from './store/deckStore';
 import { useQueueStore } from './store/queueStore';
 
-type View = 'home' | 'deckList' | 'deckBuilder' | 'profileSetup' | 'deckSelector' | 'queueWaiting' | 'config';
+type View = 'home' | 'deckList' | 'deckBuilder' | 'profileSetup' | 'deckSelector' | 'queueWaiting' | 'config' | 'performance';
 
 export default function App() {
   const { username, playerId, nickname, logout } = useAuthStore();
@@ -70,6 +71,14 @@ export default function App() {
       return <ConfigScreen onBack={handleHome} />;
     }
 
+    if (view === 'performance') {
+      return (
+        <div style={styles.page}>
+          <PerformanceScreen onBack={handleHome} />
+        </div>
+      );
+    }
+
     if (view === 'deckSelector') {
       return (
         <div style={styles.page}>
@@ -106,7 +115,7 @@ export default function App() {
           </div>
           <button style={styles.deckBtn} onClick={handleListDecks}>My Decks</button>
           <button style={styles.disabledBtn} disabled>Store</button>
-          <button style={styles.disabledBtn} disabled>Performance</button>
+          <button style={styles.deckBtn} onClick={() => setView('performance')}>Performance</button>
           <button style={styles.deckBtn} onClick={() => setView('config')}>Config</button>
           <button style={styles.logoutBtn} onClick={handleLogout}>Logout</button>
         </div>

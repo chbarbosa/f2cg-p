@@ -42,7 +42,13 @@ public class SeasonService {
                 .map(this::toDomain);
     }
 
-    private Season toDomain(SeasonEntity e) {
+    public Mono<Season> getSeasonById(String id) {
+        return seasonRepository.findById(id)
+                .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Season not found")))
+                .map(this::toDomain);
+    }
+
+    Season toDomain(SeasonEntity e) {
         return new Season(
                 e.getId(),
                 e.getYear(),
