@@ -26,13 +26,18 @@ public class PlayerService {
     private final PlayerRepository playerRepository;
     private final JwtUtil jwtUtil;
     private final EmailService emailService;
+    private final SeasonService seasonService;
+    private final RankCalculationService rankCalculationService;
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
     private final Random random = new Random();
 
-    public PlayerService(PlayerRepository playerRepository, JwtUtil jwtUtil, EmailService emailService) {
+    public PlayerService(PlayerRepository playerRepository, JwtUtil jwtUtil, EmailService emailService,
+                         SeasonService seasonService, RankCalculationService rankCalculationService) {
         this.playerRepository = playerRepository;
         this.jwtUtil = jwtUtil;
         this.emailService = emailService;
+        this.seasonService = seasonService;
+        this.rankCalculationService = rankCalculationService;
     }
 
     public Mono<RegisterResponse> register(String email, String password) {
@@ -85,7 +90,16 @@ public class PlayerService {
                     if (!player.isActive()) {
                         return Mono.error(new ResponseStatusException(HttpStatus.FORBIDDEN, "Account not activated"));
                     }
-                    return Mono.just(new AuthResponse(player.getId(), jwtUtil.generate(player.getId()), player.getNickname(), player.getCountry()));
+                    AuthResponse response = new AuthResponse(
+                            player.getId(), jwtUtil.generate(player.getId()),
+                            player.getNickname(), player.getCountry());
+                    return seasonService.getCurrentSeason()
+                            .flatMap(season -> rankCalculationService.calculateRanksIfDue(season))
+                            .onErrorResume(ResponseStatusException.class, e ->
+                                    e.getStatusCode() == HttpStatus.NOT_FOUND
+                                            ? Mono.empty()
+                                            : Mono.error(e))
+                            .then(Mono.just(response));
                 });
     }
 

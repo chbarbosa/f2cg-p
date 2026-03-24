@@ -40,3 +40,28 @@ CREATE TABLE IF NOT EXISTS queue_entries (
     status      VARCHAR(10)  NOT NULL DEFAULT 'WAITING',
     joined_at   TIMESTAMP    NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS seasons (
+    id                       VARCHAR(36)  PRIMARY KEY,
+    season_year              INT          NOT NULL,
+    season_number            INT          NOT NULL,
+    name                     VARCHAR(100),
+    start_date               DATE         NOT NULL,
+    end_date                 DATE         NOT NULL,
+    phase2_start_date        DATE         NOT NULL,
+    status                   VARCHAR(20)  NOT NULL,
+    last_weekly_calculation  DATE
+);
+
+CREATE TABLE IF NOT EXISTS player_season_stats (
+    id                VARCHAR(36)  PRIMARY KEY,
+    player_id         VARCHAR(36)  NOT NULL REFERENCES players(id),
+    season_id         VARCHAR(36)  NOT NULL REFERENCES seasons(id),
+    total_matches     INT          NOT NULL DEFAULT 0,
+    victories         INT          NOT NULL DEFAULT 0,
+    defeats           INT          NOT NULL DEFAULT 0,
+    rank              VARCHAR(20)  NOT NULL DEFAULT 'PENDING',
+    highest_rank      VARCHAR(20)  NOT NULL DEFAULT 'PENDING',
+    matches_this_week INT          NOT NULL DEFAULT 0,
+    last_rank_update  TIMESTAMP
+);

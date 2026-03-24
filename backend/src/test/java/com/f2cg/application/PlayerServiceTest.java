@@ -31,11 +31,18 @@ class PlayerServiceTest {
     @Mock
     private EmailService emailService;
 
+    @Mock
+    private SeasonService seasonService;
+
+    @Mock
+    private RankCalculationService rankCalculationService;
+
     private PlayerService playerService;
 
     @BeforeEach
     void setUp() {
-        playerService = new PlayerService(playerRepository, jwtUtil, emailService);
+        playerService = new PlayerService(playerRepository, jwtUtil, emailService,
+                seasonService, rankCalculationService);
     }
 
     // --- register ---
@@ -129,6 +136,8 @@ class PlayerServiceTest {
 
         when(playerRepository.findByUsername("alice@example.com")).thenReturn(Mono.just(player));
         when(jwtUtil.generate("id-1")).thenReturn("token-xyz");
+        when(seasonService.getCurrentSeason()).thenReturn(Mono.error(
+                new ResponseStatusException(HttpStatus.NOT_FOUND, "No active season")));
 
         StepVerifier.create(playerService.login("alice@example.com", rawPassword))
                 .assertNext(res -> {
