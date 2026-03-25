@@ -8,6 +8,7 @@ public record QueueEntryResponse(
         String id,
         String playerId,
         String deckId,
+        String matchmakingRank,
         String status,
         LocalDateTime joinedAt
 ) {
@@ -16,6 +17,7 @@ public record QueueEntryResponse(
                 entry.id(),
                 entry.playerId(),
                 entry.deckId(),
+                entry.matchmakingRank() != null ? entry.matchmakingRank().name() : null,
                 entry.status().name(),
                 entry.joinedAt()
         );

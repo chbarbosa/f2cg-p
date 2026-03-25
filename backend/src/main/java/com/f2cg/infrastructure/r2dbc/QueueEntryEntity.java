@@ -18,6 +18,8 @@ public class QueueEntryEntity implements Persistable<String> {
     @Column("deck_id")
     private String deckId;
     private String status;
+    @Column("matchmaking_rank")
+    private String matchmakingRank;
     @Column("joined_at")
     private LocalDateTime joinedAt;
 
@@ -29,11 +31,12 @@ public class QueueEntryEntity implements Persistable<String> {
     }
 
     public QueueEntryEntity(String id, String playerId, String deckId,
-                            String status, LocalDateTime joinedAt) {
+                            String status, String matchmakingRank, LocalDateTime joinedAt) {
         this.id = id;
         this.playerId = playerId;
         this.deckId = deckId;
         this.status = status;
+        this.matchmakingRank = matchmakingRank;
         this.joinedAt = joinedAt;
         this.isNew = true;
     }
@@ -45,11 +48,13 @@ public class QueueEntryEntity implements Persistable<String> {
     public String getPlayerId() { return playerId; }
     public String getDeckId() { return deckId; }
     public String getStatus() { return status; }
+    public String getMatchmakingRank() { return matchmakingRank; }
     public LocalDateTime getJoinedAt() { return joinedAt; }
 
     public void setId(String id) { this.id = id; }
     public void setPlayerId(String playerId) { this.playerId = playerId; }
     public void setDeckId(String deckId) { this.deckId = deckId; }
     public void setStatus(String status) { this.status = status; }
+    public void setMatchmakingRank(String matchmakingRank) { this.matchmakingRank = matchmakingRank; }
     public void setJoinedAt(LocalDateTime joinedAt) { this.joinedAt = joinedAt; }
 }

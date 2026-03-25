@@ -3,7 +3,9 @@ package com.f2cg.application;
 import com.f2cg.domain.deck.DeckStatus;
 import com.f2cg.domain.queue.QueueEntry;
 import com.f2cg.domain.queue.QueueStatus;
+import com.f2cg.domain.season.PlayerRank;
 import com.f2cg.infrastructure.r2dbc.DeckRepository;
+import com.f2cg.infrastructure.r2dbc.PlayerSeasonStatsRepository;
 import com.f2cg.infrastructure.r2dbc.QueueEntryEntity;
 import com.f2cg.infrastructure.r2dbc.QueueEntryRepository;
 import org.springframework.http.HttpStatus;
@@ -11,8 +13,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Mono;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -20,10 +24,20 @@ public class QueueService {
 
     private final QueueEntryRepository queueEntryRepository;
     private final DeckRepository deckRepository;
+    private final SeasonService seasonService;
+    private final RankCalculationService rankCalculationService;
+    private final PlayerSeasonStatsRepository playerSeasonStatsRepository;
 
-    public QueueService(QueueEntryRepository queueEntryRepository, DeckRepository deckRepository) {
+    public QueueService(QueueEntryRepository queueEntryRepository,
+                        DeckRepository deckRepository,
+                        SeasonService seasonService,
+                        RankCalculationService rankCalculationService,
+                        PlayerSeasonStatsRepository playerSeasonStatsRepository) {
         this.queueEntryRepository = queueEntryRepository;
         this.deckRepository = deckRepository;
+        this.seasonService = seasonService;
+        this.rankCalculationService = rankCalculationService;
+        this.playerSeasonStatsRepository = playerSeasonStatsRepository;
     }
 
     public Mono<QueueEntry> joinQueue(String playerId, String deckId) {
@@ -37,20 +51,34 @@ public class QueueService {
                         return Mono.error(new ResponseStatusException(HttpStatus.BAD_REQUEST,
                                 "Deck must be PLAYABLE to join queue"));
                     }
-                    return queueEntryRepository
-                            .findByPlayerIdAndStatus(playerId, QueueStatus.WAITING.name())
-                            .flatMap(existing -> Mono.<QueueEntryEntity>error(
-                                    new ResponseStatusException(HttpStatus.CONFLICT, "Already in queue")))
-                            .switchIfEmpty(Mono.defer(() -> {
-                                QueueEntryEntity entity = new QueueEntryEntity(
-                                        UUID.randomUUID().toString(),
-                                        playerId,
-                                        deckId,
-                                        QueueStatus.WAITING.name(),
-                                        LocalDateTime.now()
-                                );
-                                return queueEntryRepository.save(entity);
-                            }));
+                    return seasonService.getCurrentSeason()
+                            .flatMap(season -> {
+                                var phase = seasonService.getCurrentPhase(season, LocalDate.now());
+                                return playerSeasonStatsRepository
+                                        .findByPlayerIdAndSeasonId(playerId, season.id())
+                                        .map(stats -> PlayerRank.valueOf(stats.getRank()))
+                                        .defaultIfEmpty(PlayerRank.PENDING)
+                                        .map(rank -> Optional.ofNullable(
+                                                rankCalculationService.getMatchmakingRank(rank, phase)));
+                            })
+                            .flatMap(matchmakingRankOpt -> {
+                                PlayerRank matchmakingRank = matchmakingRankOpt.orElse(null);
+                                return queueEntryRepository
+                                        .findByPlayerIdAndStatus(playerId, QueueStatus.WAITING.name())
+                                        .flatMap(existing -> Mono.<QueueEntryEntity>error(
+                                                new ResponseStatusException(HttpStatus.CONFLICT, "Already in queue")))
+                                        .switchIfEmpty(Mono.defer(() -> {
+                                            QueueEntryEntity entity = new QueueEntryEntity(
+                                                    UUID.randomUUID().toString(),
+                                                    playerId,
+                                                    deckId,
+                                                    QueueStatus.WAITING.name(),
+                                                    matchmakingRank != null ? matchmakingRank.name() : null,
+                                                    LocalDateTime.now()
+                                            );
+                                            return queueEntryRepository.save(entity);
+                                        }));
+                            });
                 })
                 .map(this::toDomain);
     }
@@ -77,10 +105,14 @@ public class QueueService {
     }
 
     private QueueEntry toDomain(QueueEntryEntity entity) {
+        PlayerRank matchmakingRank = entity.getMatchmakingRank() != null
+                ? PlayerRank.valueOf(entity.getMatchmakingRank())
+                : null;
         return new QueueEntry(
                 entity.getId(),
                 entity.getPlayerId(),
                 entity.getDeckId(),
+                matchmakingRank,
                 QueueStatus.valueOf(entity.getStatus()),
                 entity.getJoinedAt()
         );
