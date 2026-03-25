@@ -1,3 +1,73 @@
+-- ============================================================
+-- TEST PLAYER: test01@gmail.com / pass123
+-- ============================================================
+
+-- Player (active, no pending activation)
+INSERT INTO players (id, username, password_hash, active, nickname, country) VALUES
+('aaaaaaaa-0001-0000-0000-000000000008', 'test01@gmail.com',
+ '$2b$10$aHTGws9W3WlsdU7wMW/izeIrr6fEcG2wzRK7zqKNaYcrsRioJKgF.',
+ TRUE, 'TestPlayer01', 'BR');
+
+-- Seasons
+INSERT INTO seasons (id, season_year, season_number, name, start_date, end_date, phase2_start_date, status) VALUES
+-- Active season (S1 2026) — currently
+('bbbbbbbb-0001-0000-0000-000000000007', 2026, 2, 'S2 2026',
+ '2026-03-01', '2026-04-30', '2026-04-01', 'ACTIVE'),
+('bbbbbbbb-0001-0000-0000-000000000006', 2026, 1, 'S1 2026',
+ '2026-01-01', '2026-02-28', '2026-02-01', 'FINISHED'),
+('bbbbbbbb-0001-0000-0000-000000000005', 2025, 5, 'S5 2025',
+ '2025-09-01', '2025-10-30', '2025-10-01', 'FINISHED'),
+('bbbbbbbb-0001-0000-0000-000000000004', 2025, 4, 'S4 2025',
+ '2025-07-01', '2025-08-31', '2025-08-01', 'FINISHED'),
+('bbbbbbbb-0001-0000-0000-000000000003', 2025, 3, 'S3 2025',
+ '2025-05-01', '2025-06-30', '2025-06-01', 'FINISHED'),
+('bbbbbbbb-0001-0000-0000-000000000002', 2025, 2, 'S2 2025',
+ '2025-03-01', '2025-04-30', '2025-04-01', 'FINISHED'),
+('bbbbbbbb-0001-0000-0000-000000000001', 2025, 1, 'S1 2025',
+ '2025-01-01', '2025-03-30', '2025-02-01', 'FINISHED');
+
+-- Player season stats (player_id = aaaaaaaa-0001-0000-0000-000000000008)
+INSERT INTO player_season_stats
+    (id, player_id, season_id, total_matches, victories, defeats, rank, highest_rank, matches_this_week)
+VALUES
+-- S2 2026 (active, FREE phase): ROOKIE start, 3 matches so far
+('cccccccc-0001-0000-0000-000000000007',
+ 'aaaaaaaa-0001-0000-0000-000000000008',
+ 'bbbbbbbb-0001-0000-0000-000000000007',
+ 3, 2, 1, 'PENDING', 'PENDING', 3),
+-- S1 2026 (finished, RANKED): ADVANCED, peak ELITE, 8 matches that week
+('cccccccc-0001-0000-0000-000000000006',
+ 'aaaaaaaa-0001-0000-0000-000000000008',
+ 'bbbbbbbb-0001-0000-0000-000000000006',
+ 45, 28, 17, 'ADVANCED', 'ELITE', 8),
+-- S5 2025 (finished): ELITE rank achieved
+('cccccccc-0001-0000-0000-000000000005',
+ 'aaaaaaaa-0001-0000-0000-000000000008',
+ 'bbbbbbbb-0001-0000-0000-000000000005',
+ 52, 35, 17, 'ELITE', 'ELITE', 0),
+-- S4 2025 (finished): INTERMEDIATE, climbing
+('cccccccc-0001-0000-0000-000000000004',
+ 'aaaaaaaa-0001-0000-0000-000000000008',
+ 'bbbbbbbb-0001-0000-0000-000000000004',
+ 38, 22, 16, 'INTERMEDIATE', 'ADVANCED', 0),
+-- S3 2025 (finished): ROOKIE, first ranked season
+('cccccccc-0001-0000-0000-000000000003',
+ 'aaaaaaaa-0001-0000-0000-000000000008',
+ 'bbbbbbbb-0001-0000-0000-000000000003',
+ 20, 10, 10, 'ROOKIE', 'ROOKIE', 0),
+-- S2 2025 (finished): just started, PENDING
+('cccccccc-0001-0000-0000-000000000002',
+ 'aaaaaaaa-0001-0000-0000-000000000008',
+ 'bbbbbbbb-0001-0000-0000-000000000002',
+ 8, 4, 4, 'PENDING', 'PENDING', 0),
+-- S1 2025 (finished): very first season, few matches
+('cccccccc-0001-0000-0000-000000000001',
+ 'aaaaaaaa-0001-0000-0000-000000000008',
+ 'bbbbbbbb-0001-0000-0000-000000000001',
+ 5, 2, 3, 'PENDING', 'PENDING', 0);
+
+-- ============================================================
+
 -- WARRIOR cards (31: 20 units, 6 buffs, 5 debuffs)
 INSERT INTO cards (id, name, mana_cost, card_type, theme, unit_class, attack, defense, effect_type, effect_value) VALUES
 ('w-u-01', 'Iron Knight',      3, 'UNIT',   'WARRIOR', 'WARRIOR', 4, 5, NULL, NULL),

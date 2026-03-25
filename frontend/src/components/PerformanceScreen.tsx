@@ -121,6 +121,7 @@ function StatsPanel({
 export function PerformanceScreen({ onBack }: Props) {
   const [currentData, setCurrentData] = useState<PerformanceResponse | null>(null);
   const [seasons, setSeasons] = useState<SeasonSummary[]>([]);
+  const [selectedYear, setSelectedYear] = useState<number | null>(null);
   const [selectedSeasonId, setSelectedSeasonId] = useState<string>('');
   const [pastData, setPastData] = useState<PerformanceResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -132,17 +133,28 @@ export function PerformanceScreen({ onBack }: Props) {
       .then(([perf, seas]) => {
         setCurrentData(perf);
         setSeasons(seas);
+        setSelectedYear(perf.season.year);
       })
       .catch(err => setError(err.message ?? 'Failed to load performance data'))
       .finally(() => setLoading(false));
   }, []);
 
-  const handleSeasonChange = (seasonId: string) => {
-    setSelectedSeasonId(seasonId);
-    if (!seasonId) {
+  const years = [...new Set(seasons.map(s => s.year))].sort((a, b) => b - a);
+  const seasonsForYear = seasons.filter(s => s.year === selectedYear);
+
+  const handleYearSelect = (year: number) => {
+    setSelectedYear(year);
+    setSelectedSeasonId('');
+    setPastData(null);
+  };
+
+  const handleSeasonSelect = (seasonId: string) => {
+    if (!seasonId || seasonId === currentData?.season.id) {
+      setSelectedSeasonId('');
       setPastData(null);
       return;
     }
+    setSelectedSeasonId(seasonId);
     setLoadingPast(true);
     getSeasonPerformance(seasonId)
       .then(setPastData)
@@ -178,23 +190,47 @@ export function PerformanceScreen({ onBack }: Props) {
 
       {!loading && !error && currentData && (
         <>
-          {seasons.length > 0 && (
-            <div style={styles.selectorRow}>
-              <label style={styles.selectorLabel} htmlFor="season-select">Season:</label>
-              <select
-                id="season-select"
-                data-testid="season-selector"
-                style={styles.select}
-                value={selectedSeasonId}
-                onChange={e => handleSeasonChange(e.target.value)}
-              >
-                <option value="">Current season</option>
-                {seasons.map(s => (
-                  <option key={s.id} value={s.id}>
-                    Season {s.name ?? s.seasonNumber} · {s.year}
-                  </option>
-                ))}
-              </select>
+          {years.length > 0 && (
+            <div style={styles.yearRow} data-testid="year-selector">
+              {years.map(year => (
+                <button
+                  key={year}
+                  data-testid={`year-btn-${year}`}
+                  onClick={() => handleYearSelect(year)}
+                  style={{
+                    ...styles.yearBtn,
+                    ...(selectedYear === year ? styles.yearBtnActive : {}),
+                  }}
+                >
+                  {year}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {seasonsForYear.length > 0 && (
+            <div style={styles.seasonRow} data-testid="season-selector">
+              {seasonsForYear.map(s => {
+                const isCurrent = s.id === currentData.season.id;
+                const isSelected = isCurrent
+                  ? !selectedSeasonId
+                  : selectedSeasonId === s.id;
+                return (
+                  <button
+                    key={s.id}
+                    data-testid={`season-btn-${s.id}`}
+                    onClick={() => handleSeasonSelect(s.id)}
+                    style={{
+                      ...styles.seasonBtn,
+                      ...(isSelected ? styles.seasonBtnActive : {}),
+                      ...(isCurrent ? styles.seasonBtnCurrent : {}),
+                    }}
+                  >
+                    {s.name ?? `S${s.seasonNumber}`}
+                    {isCurrent && <span style={styles.currentDot} />}
+                  </button>
+                );
+              })}
             </div>
           )}
 
@@ -311,25 +347,56 @@ const styles: Record<string, React.CSSProperties> = {
     padding: '0.6rem 1rem',
     fontSize: '0.9rem',
   },
-  selectorRow: {
+  yearRow: {
+    display: 'flex',
+    gap: '0.5rem',
+    marginBottom: '0.75rem',
+    flexWrap: 'wrap',
+  },
+  yearBtn: {
+    background: 'none',
+    border: '1px solid #313244',
+    color: '#a6adc8',
+    borderRadius: 6,
+    padding: '0.3rem 0.8rem',
+    cursor: 'pointer',
+    fontSize: '0.9rem',
+  },
+  yearBtnActive: {
+    borderColor: '#89b4fa',
+    color: '#89b4fa',
+  },
+  seasonRow: {
+    display: 'flex',
+    gap: '0.5rem',
+    marginBottom: '1rem',
+    flexWrap: 'wrap',
+  },
+  seasonBtn: {
+    background: 'none',
+    border: '1px solid #313244',
+    color: '#a6adc8',
+    borderRadius: 6,
+    padding: '0.3rem 0.8rem',
+    cursor: 'pointer',
+    fontSize: '0.85rem',
     display: 'flex',
     alignItems: 'center',
-    gap: '0.75rem',
-    marginBottom: '1rem',
+    gap: '0.4rem',
   },
-  selectorLabel: {
-    color: '#a6adc8',
-    fontSize: '0.9rem',
-  },
-  select: {
-    background: '#1e1e2e',
-    border: '1px solid #313244',
+  seasonBtnActive: {
+    background: '#313244',
     color: '#cdd6f4',
-    borderRadius: 6,
-    padding: '0.4rem 0.6rem',
-    fontSize: '0.9rem',
-    cursor: 'pointer',
-    flex: 1,
+  },
+  seasonBtnCurrent: {
+    borderColor: '#a6e3a1',
+  },
+  currentDot: {
+    width: 6,
+    height: 6,
+    borderRadius: '50%',
+    background: '#a6e3a1',
+    display: 'inline-block',
   },
   center: {
     display: 'flex',
