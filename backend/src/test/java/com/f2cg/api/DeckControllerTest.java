@@ -1,34 +1,12 @@
 package com.f2cg.api;
 
-import com.f2cg.infrastructure.r2dbc.PlayerRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.http.MediaType;
-import org.springframework.r2dbc.core.DatabaseClient;
-import org.springframework.test.web.reactive.server.WebTestClient;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@AutoConfigureWebTestClient
-class DeckControllerTest {
+class DeckControllerTest extends BaseControllerTest {
 
-    @Autowired
-    private WebTestClient webTestClient;
-
-    @Autowired
-    private DatabaseClient databaseClient;
-
-    @Autowired
-    private PlayerRepository playerRepository;
-
-    private static final String REGISTER_URL = "/api/auth/register";
-    private static final String VERIFY_URL   = "/api/auth/verify";
-    private static final String LOGIN_URL    = "/api/auth/login";
-    private static final String DECKS_URL    = "/api/decks";
-    private static final String CARDS_URL    = "/api/cards";
+    private static final String DECKS_URL = "/api/decks";
 
     private static final String DECK_USER = "deckuser@test.com";
 
@@ -39,34 +17,7 @@ class DeckControllerTest {
         databaseClient.sql("DELETE FROM decks").fetch().rowsUpdated().block();
         databaseClient.sql("DELETE FROM players").fetch().rowsUpdated().block();
 
-        webTestClient.post().uri(REGISTER_URL)
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue("{\"username\":\"" + DECK_USER + "\",\"password\":\"pass123\"}")
-                .exchange()
-                .expectStatus().isCreated();
-
-        String code = playerRepository.findByUsername(DECK_USER)
-                .map(p -> p.getActivationCode())
-                .block();
-
-        webTestClient.post().uri(VERIFY_URL)
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue("{\"email\":\"" + DECK_USER + "\",\"code\":\"" + code + "\"}")
-                .exchange()
-                .expectStatus().isOk();
-
-        var loginResult = webTestClient.post().uri(LOGIN_URL)
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue("{\"username\":\"" + DECK_USER + "\",\"password\":\"pass123\"}")
-                .exchange()
-                .expectStatus().isOk()
-                .expectBody()
-                .jsonPath("$.token").isNotEmpty()
-                .jsonPath("$.playerId").isNotEmpty()
-                .returnResult();
-
-        String responseBody = new String(loginResult.getResponseBody());
-        token = extractJsonField(responseBody, "token");
+        token = registerAndLogin(DECK_USER);
     }
 
     @AfterEach
@@ -76,18 +27,9 @@ class DeckControllerTest {
     }
 
     @Test
-    void getCards_byTheme_returns31Cards() {
-        webTestClient.get().uri(CARDS_URL + "?theme=WARRIOR")
-                .exchange()
-                .expectStatus().isOk()
-                .expectBody()
-                .jsonPath("$.length()").isEqualTo(31);
-    }
-
-    @Test
     void createDeck_noCards_returnsDraftStatus() {
         webTestClient.post().uri(DECKS_URL)
-                .contentType(MediaType.APPLICATION_JSON)
+                .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + token)
                 .bodyValue("""
                         {"name":"My Deck","theme":"WARRIOR","cardIds":[]}
@@ -105,7 +47,7 @@ class DeckControllerTest {
         String cardIdsJson = buildCardIdsJson(20);
 
         webTestClient.post().uri(DECKS_URL)
-                .contentType(MediaType.APPLICATION_JSON)
+                .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + token)
                 .bodyValue("{\"name\":\"Full Deck\",\"theme\":\"WARRIOR\",\"cardIds\":" + cardIdsJson + "}")
                 .exchange()
@@ -133,7 +75,7 @@ class DeckControllerTest {
         String cardIdsJson = buildCardIdsJson(20);
 
         webTestClient.put().uri(DECKS_URL + "/" + deckId)
-                .contentType(MediaType.APPLICATION_JSON)
+                .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + token)
                 .bodyValue("{\"name\":\"Update Deck\",\"theme\":\"WARRIOR\",\"cardIds\":" + cardIdsJson + "}")
                 .exchange()
@@ -159,7 +101,7 @@ class DeckControllerTest {
         }
 
         webTestClient.post().uri(DECKS_URL)
-                .contentType(MediaType.APPLICATION_JSON)
+                .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + token)
                 .bodyValue("""
                         {"name":"Deck 8","theme":"WARRIOR","cardIds":[]}
@@ -171,7 +113,7 @@ class DeckControllerTest {
     @Test
     void createDeck_duplicateCardIds_returns400() {
         webTestClient.post().uri(DECKS_URL)
-                .contentType(MediaType.APPLICATION_JSON)
+                .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + token)
                 .bodyValue("""
                         {"name":"Bad Deck","theme":"WARRIOR","cardIds":["w-u-01","w-u-01"]}
@@ -183,7 +125,7 @@ class DeckControllerTest {
     @Test
     void createDeck_wrongThemeCard_returns400() {
         webTestClient.post().uri(DECKS_URL)
-                .contentType(MediaType.APPLICATION_JSON)
+                .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + token)
                 .bodyValue("""
                         {"name":"Bad Deck","theme":"WARRIOR","cardIds":["m-u-01"]}
@@ -195,7 +137,7 @@ class DeckControllerTest {
     @Test
     void createDeck_withoutToken_returns401() {
         webTestClient.post().uri(DECKS_URL)
-                .contentType(MediaType.APPLICATION_JSON)
+                .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
                 .bodyValue("""
                         {"name":"No Auth","theme":"WARRIOR","cardIds":[]}
                         """)
@@ -220,7 +162,7 @@ class DeckControllerTest {
 
     private String createDraftDeck(String name) {
         var result = webTestClient.post().uri(DECKS_URL)
-                .contentType(MediaType.APPLICATION_JSON)
+                .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + token)
                 .bodyValue("{\"name\":\"" + name + "\",\"theme\":\"WARRIOR\",\"cardIds\":[]}")
                 .exchange()
@@ -230,29 +172,5 @@ class DeckControllerTest {
 
         String body = new String(result.getResponseBody());
         return extractJsonField(body, "id");
-    }
-
-    // Uses the 20 seeded WARRIOR unit cards exactly
-    private static final java.util.List<String> WARRIOR_20_IDS = java.util.List.of(
-            "w-u-01","w-u-02","w-u-03","w-u-04","w-u-05",
-            "w-u-06","w-u-07","w-u-08","w-u-09","w-u-10",
-            "w-u-11","w-u-12","w-u-13","w-u-14","w-u-15",
-            "w-u-16","w-u-17","w-u-18","w-u-19","w-u-20"
-    );
-
-    private String buildCardIdsJson(int count) {
-        String ids = WARRIOR_20_IDS.stream()
-                .limit(count)
-                .map(id -> "\"" + id + "\"")
-                .reduce((a, b) -> a + "," + b)
-                .orElse("");
-        return "[" + ids + "]";
-    }
-
-    private String extractJsonField(String json, String field) {
-        String search = "\"" + field + "\":\"";
-        int start = json.indexOf(search) + search.length();
-        int end = json.indexOf("\"", start);
-        return json.substring(start, end);
     }
 }

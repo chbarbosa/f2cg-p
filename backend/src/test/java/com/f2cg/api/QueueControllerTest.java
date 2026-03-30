@@ -1,47 +1,20 @@
 package com.f2cg.api;
 
-import com.f2cg.infrastructure.r2dbc.PlayerRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
-import org.springframework.r2dbc.core.DatabaseClient;
-import org.springframework.test.web.reactive.server.WebTestClient;
 
 import java.time.LocalDate;
 import java.util.UUID;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@AutoConfigureWebTestClient
-class QueueControllerTest {
+class QueueControllerTest extends BaseControllerTest {
 
-    @Autowired
-    private WebTestClient webTestClient;
-
-    @Autowired
-    private DatabaseClient databaseClient;
-
-    @Autowired
-    private PlayerRepository playerRepository;
-
-    private static final String REGISTER_URL = "/api/auth/register";
-    private static final String VERIFY_URL   = "/api/auth/verify";
-    private static final String LOGIN_URL    = "/api/auth/login";
     private static final String DECKS_URL    = "/api/decks";
     private static final String QUEUE_URL    = "/api/queue";
 
-    private static final String QUEUE_USER        = "queueuser@test.com";
-    private static final String QUEUE_USER_2      = "queueuser2@test.com";
-
-    private static final java.util.List<String> WARRIOR_20_IDS = java.util.List.of(
-            "w-u-01","w-u-02","w-u-03","w-u-04","w-u-05",
-            "w-u-06","w-u-07","w-u-08","w-u-09","w-u-10",
-            "w-u-11","w-u-12","w-u-13","w-u-14","w-u-15",
-            "w-u-16","w-u-17","w-u-18","w-u-19","w-u-20"
-    );
+    private static final String QUEUE_USER   = "queueuser@test.com";
+    private static final String QUEUE_USER_2 = "queueuser2@test.com";
 
     private String token;
     private String playableDeckId;
@@ -267,35 +240,6 @@ class QueueControllerTest {
 
     // --- helpers ---
 
-    private String registerAndLogin(String email) {
-        webTestClient.post().uri(REGISTER_URL)
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue("{\"username\":\"" + email + "\",\"password\":\"pass123\"}")
-                .exchange()
-                .expectStatus().isCreated();
-
-        String code = playerRepository.findByUsername(email)
-                .map(p -> p.getActivationCode())
-                .block();
-
-        webTestClient.post().uri(VERIFY_URL)
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue("{\"email\":\"" + email + "\",\"code\":\"" + code + "\"}")
-                .exchange()
-                .expectStatus().isOk();
-
-        var loginResult = webTestClient.post().uri(LOGIN_URL)
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue("{\"username\":\"" + email + "\",\"password\":\"pass123\"}")
-                .exchange()
-                .expectStatus().isOk()
-                .expectBody()
-                .jsonPath("$.token").isNotEmpty()
-                .returnResult();
-
-        return extractJsonField(new String(loginResult.getResponseBody()), "token");
-    }
-
     private String createPlayableDeck(String authToken) {
         String cardIdsJson = buildCardIdsJson(20);
         var deckResult = webTestClient.post().uri(DECKS_URL)
@@ -355,21 +299,5 @@ class QueueControllerTest {
                 .bind("seasonId", seasonId)
                 .bind("rank", rank)
                 .fetch().rowsUpdated().block();
-    }
-
-    private String buildCardIdsJson(int count) {
-        String ids = WARRIOR_20_IDS.stream()
-                .limit(count)
-                .map(id -> "\"" + id + "\"")
-                .reduce((a, b) -> a + "," + b)
-                .orElse("");
-        return "[" + ids + "]";
-    }
-
-    private String extractJsonField(String json, String field) {
-        String search = "\"" + field + "\":\"";
-        int start = json.indexOf(search) + search.length();
-        int end = json.indexOf("\"", start);
-        return json.substring(start, end);
     }
 }

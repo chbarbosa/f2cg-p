@@ -2,10 +2,8 @@ package com.f2cg.api;
 
 import com.f2cg.api.dto.CardResponse;
 import com.f2cg.application.DeckService;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import com.f2cg.infrastructure.JwtUtil;
+import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 
 @RestController
@@ -13,13 +11,18 @@ import reactor.core.publisher.Flux;
 public class CardController {
 
     private final DeckService deckService;
+    private final JwtUtil jwtUtil;
 
-    public CardController(DeckService deckService) {
+    public CardController(DeckService deckService, JwtUtil jwtUtil) {
         this.deckService = deckService;
+        this.jwtUtil = jwtUtil;
     }
 
     @GetMapping
-    public Flux<CardResponse> getCards(@RequestParam String theme) {
+    public Flux<CardResponse> getCards(
+            @RequestParam String theme,
+            @RequestHeader(value = "Authorization", required = false) String auth) {
+        jwtUtil.extractPlayerIdFromHeader(auth);
         return deckService.getCardsByTheme(theme).map(CardResponse::from);
     }
 }
