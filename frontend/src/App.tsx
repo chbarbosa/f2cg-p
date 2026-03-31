@@ -4,6 +4,7 @@ import { ConfigScreen } from './components/ConfigScreen';
 import { DeckBuilder } from './components/DeckBuilder';
 import { DeckList } from './components/DeckList';
 import { DeckSelector } from './components/DeckSelector';
+import { GameScreen } from './components/GameScreen';
 import { ProfileSetup } from './components/ProfileSetup';
 import { QueueWaiting } from './components/QueueWaiting';
 import { PerformanceScreen } from './components/PerformanceScreen';
@@ -11,13 +12,14 @@ import { useAuthStore } from './store/authStore';
 import { useDeckStore } from './store/deckStore';
 import { useQueueStore } from './store/queueStore';
 
-type View = 'home' | 'deckList' | 'deckBuilder' | 'profileSetup' | 'deckSelector' | 'queueWaiting' | 'config' | 'performance';
+type View = 'home' | 'deckList' | 'deckBuilder' | 'profileSetup' | 'deckSelector' | 'queueWaiting' | 'config' | 'performance' | 'game';
 
 export default function App() {
   const { username, playerId, nickname, logout } = useAuthStore();
   const { decks, fetchDecks } = useDeckStore();
   const { join, clearEntry } = useQueueStore();
   const [view, setView] = useState<View>('home');
+  const [gamePublicId, setGamePublicId] = useState<string | null>(null);
 
   useEffect(() => {
     if (username && view === 'home') {
@@ -34,6 +36,12 @@ export default function App() {
   const handleEditDeck = () => setView('deckBuilder');
   const handleListDecks = () => setView('deckList');
   const handleHome = () => setView('home');
+
+  const handleMatchFound = (publicId: string) => {
+    clearEntry();
+    setGamePublicId(publicId);
+    setView('game');
+  };
 
   const handleReady = async (deckId: string) => {
     await join(deckId);
@@ -91,7 +99,14 @@ export default function App() {
     }
 
     if (view === 'queueWaiting') {
-      return <QueueWaiting onCancelled={() => { clearEntry(); handleHome(); }} />;
+      return <QueueWaiting
+        onCancelled={() => { clearEntry(); handleHome(); }}
+        onMatchFound={handleMatchFound}
+      />;
+    }
+
+    if (view === 'game' && gamePublicId) {
+      return <GameScreen gamePublicId={gamePublicId} />;
     }
 
     return (

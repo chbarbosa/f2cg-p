@@ -23,3 +23,17 @@ jwt:
 
 cors:
   allowed-origin: http://localhost:3000
+
+game:
+  queue:
+    timeout-seconds: 30
+
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+game:
+  queue:
+    timeout-seconds: 180

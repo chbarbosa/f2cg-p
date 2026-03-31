@@ -57,4 +57,5 @@ public class QueueEntryEntity implements Persistable<String> {
     public void setStatus(String status) { this.status = status; }
     public void setMatchmakingRank(String matchmakingRank) { this.matchmakingRank = matchmakingRank; }
     public void setJoinedAt(LocalDateTime joinedAt) { this.joinedAt = joinedAt; }
+    public void markPersisted() { this.isNew = false; }
 }

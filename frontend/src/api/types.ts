@@ -42,7 +42,7 @@ export interface UpdateDeckRequest {
   cardIds: string[];
 }
 
-export type QueueStatus = 'WAITING' | 'MATCHED' | 'CANCELLED';
+export type QueueStatus = 'WAITING' | 'MATCHED' | 'CANCELLED' | 'TIMED_OUT';
 
 export type PlayerRank = 'ELITE' | 'ADVANCED' | 'INTERMEDIATE' | 'ROOKIE' | 'PENDING';
 export type SeasonPhase = 'FREE' | 'RANKED';
@@ -74,4 +74,27 @@ export interface QueueEntryResponse {
   deckId: string;
   status: QueueStatus;
   joinedAt: string;
+}
+
+export type GameStatus = 'WAITING_START' | 'IN_PROGRESS' | 'FINISHED';
+
+export interface GameResponse {
+  publicId: string;
+  player1Username: string;
+  player2Username: string;
+  status: GameStatus;
+}
+
+export interface MatchFoundPayload {
+  gamePublicId: string;
+  opponentUsername: string;
+}
+
+export interface QueueTimeoutPayload {
+  message: string;
+}
+
+export interface QueueSseEvent<T> {
+  event: string;
+  payload: T;
 }

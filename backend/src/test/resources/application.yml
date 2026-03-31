@@ -11,3 +11,7 @@ jwt:
 
 cors:
   allowed-origin: http://localhost:3000
+
+game:
+  queue:
+    timeout-seconds: 30

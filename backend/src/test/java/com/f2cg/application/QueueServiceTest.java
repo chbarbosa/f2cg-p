@@ -1,5 +1,6 @@
 package com.f2cg.application;
 
+import com.f2cg.domain.player.Player;
 import com.f2cg.domain.queue.QueueStatus;
 import com.f2cg.domain.season.PlayerRank;
 import com.f2cg.domain.season.Season;
@@ -7,16 +8,22 @@ import com.f2cg.domain.season.SeasonPhase;
 import com.f2cg.domain.season.SeasonStatus;
 import com.f2cg.infrastructure.r2dbc.DeckEntity;
 import com.f2cg.infrastructure.r2dbc.DeckRepository;
+import com.f2cg.infrastructure.r2dbc.GameEntity;
+import com.f2cg.infrastructure.r2dbc.GameRepository;
+import com.f2cg.infrastructure.r2dbc.PlayerRepository;
 import com.f2cg.infrastructure.r2dbc.PlayerSeasonStatsEntity;
 import com.f2cg.infrastructure.r2dbc.PlayerSeasonStatsRepository;
 import com.f2cg.infrastructure.r2dbc.QueueEntryEntity;
 import com.f2cg.infrastructure.r2dbc.QueueEntryRepository;
+import com.f2cg.infrastructure.sse.QueueSseBroadcaster;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -29,37 +36,43 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class QueueServiceTest {
 
-    @Mock
-    private QueueEntryRepository queueEntryRepository;
-
-    @Mock
-    private DeckRepository deckRepository;
-
-    @Mock
-    private SeasonService seasonService;
-
-    @Mock
-    private RankCalculationService rankCalculationService;
-
-    @Mock
-    private PlayerSeasonStatsRepository playerSeasonStatsRepository;
+    @Mock private QueueEntryRepository queueEntryRepository;
+    @Mock private DeckRepository deckRepository;
+    @Mock private SeasonService seasonService;
+    @Mock private RankCalculationService rankCalculationService;
+    @Mock private PlayerSeasonStatsRepository playerSeasonStatsRepository;
+    @Mock private GameRepository gameRepository;
+    @Mock private PlayerRepository playerRepository;
+    @Mock private QueueSseBroadcaster sseBroadcaster;
 
     private QueueService queueService;
 
-    private static final String PLAYER_ID = "player-1";
-    private static final String DECK_ID   = "deck-1";
-    private static final String SEASON_ID = "season-1";
+    private static final String PLAYER_ID   = "player-1";
+    private static final String OPPONENT_ID = "player-opp";
+    private static final String DECK_ID     = "deck-1";
+    private static final String SEASON_ID   = "season-1";
 
     @BeforeEach
     void setUp() {
-        queueService = new QueueService(queueEntryRepository, deckRepository,
-                seasonService, rankCalculationService, playerSeasonStatsRepository);
+        queueService = new QueueService(
+                queueEntryRepository, deckRepository,
+                seasonService, rankCalculationService, playerSeasonStatsRepository,
+                gameRepository, playerRepository, sseBroadcaster);
+        ReflectionTestUtils.setField(queueService, "timeoutSeconds", 30);
+
+        // Lenient stubs for matchmaking methods — not used by all tests
+        lenient().when(queueEntryRepository.findFirstEligibleOpponentNullRank(any()))
+                .thenReturn(Mono.empty());
+        lenient().when(queueEntryRepository.findFirstEligibleOpponentWithRank(any(), any()))
+                .thenReturn(Mono.empty());
     }
 
     // --- joinQueue ---
@@ -82,7 +95,6 @@ class QueueServiceTest {
                 .assertNext(entry -> {
                     assertThat(entry.playerId()).isEqualTo(PLAYER_ID);
                     assertThat(entry.deckId()).isEqualTo(DECK_ID);
-                    assertThat(entry.status()).isEqualTo(QueueStatus.WAITING);
                     assertThat(entry.id()).isNotNull();
                 })
                 .verifyComplete();
@@ -174,6 +186,8 @@ class QueueServiceTest {
                 .thenReturn(Mono.empty());
         when(queueEntryRepository.save(any(QueueEntryEntity.class)))
                 .thenAnswer(inv -> Mono.just(inv.getArgument(0)));
+        when(queueEntryRepository.findFirstEligibleOpponentWithRank(PLAYER_ID, "ELITE"))
+                .thenReturn(Mono.empty());
 
         StepVerifier.create(queueService.joinQueue(PLAYER_ID, DECK_ID))
                 .assertNext(entry -> assertThat(entry.matchmakingRank()).isEqualTo(PlayerRank.ELITE))
@@ -186,13 +200,15 @@ class QueueServiceTest {
         when(seasonService.getCurrentSeason()).thenReturn(Mono.just(rankedSeason()));
         when(seasonService.getCurrentPhase(any(), any())).thenReturn(SeasonPhase.RANKED);
         when(playerSeasonStatsRepository.findByPlayerIdAndSeasonId(PLAYER_ID, SEASON_ID))
-                .thenReturn(Mono.empty()); // no stats → PENDING
+                .thenReturn(Mono.empty());
         when(rankCalculationService.getMatchmakingRank(PlayerRank.PENDING, SeasonPhase.RANKED))
                 .thenReturn(PlayerRank.ROOKIE);
         when(queueEntryRepository.findByPlayerIdAndStatus(PLAYER_ID, "WAITING"))
                 .thenReturn(Mono.empty());
         when(queueEntryRepository.save(any(QueueEntryEntity.class)))
                 .thenAnswer(inv -> Mono.just(inv.getArgument(0)));
+        when(queueEntryRepository.findFirstEligibleOpponentWithRank(PLAYER_ID, "ROOKIE"))
+                .thenReturn(Mono.empty());
 
         StepVerifier.create(queueService.joinQueue(PLAYER_ID, DECK_ID))
                 .assertNext(entry -> assertThat(entry.matchmakingRank()).isEqualTo(PlayerRank.ROOKIE))
@@ -233,12 +249,172 @@ class QueueServiceTest {
                 .thenReturn(Mono.empty());
         when(queueEntryRepository.save(any(QueueEntryEntity.class)))
                 .thenAnswer(inv -> Mono.just(inv.getArgument(0)));
+        when(queueEntryRepository.findFirstEligibleOpponentWithRank(PLAYER_ID, "ROOKIE"))
+                .thenReturn(Mono.empty());
 
         StepVerifier.create(queueService.joinQueue(PLAYER_ID, DECK_ID))
                 .expectNextCount(1)
                 .verifyComplete();
 
         verify(rankCalculationService).getMatchmakingRank(eq(PlayerRank.ROOKIE), eq(SeasonPhase.RANKED));
+    }
+
+    // --- Matchmaking ---
+
+    @Test
+    void joinQueue_matchFound_whenEligibleOpponentWaiting() {
+        QueueEntryEntity opponent = new QueueEntryEntity(
+                "entry-opp", OPPONENT_ID, "deck-opp", "WAITING", null,
+                LocalDateTime.now().minusSeconds(10));
+        Player p1 = player(PLAYER_ID, "Player One");
+        Player p2 = player(OPPONENT_ID, "Opponent");
+
+        when(deckRepository.findById(DECK_ID)).thenReturn(Mono.just(playableDeck()));
+        when(seasonService.getCurrentSeason()).thenReturn(Mono.just(freeSeason()));
+        when(seasonService.getCurrentPhase(any(), any())).thenReturn(SeasonPhase.FREE);
+        when(playerSeasonStatsRepository.findByPlayerIdAndSeasonId(PLAYER_ID, SEASON_ID))
+                .thenReturn(Mono.empty());
+        when(rankCalculationService.getMatchmakingRank(PlayerRank.PENDING, SeasonPhase.FREE))
+                .thenReturn(null);
+        when(queueEntryRepository.findByPlayerIdAndStatus(PLAYER_ID, "WAITING"))
+                .thenReturn(Mono.empty());
+        when(queueEntryRepository.save(any(QueueEntryEntity.class)))
+                .thenAnswer(inv -> Mono.just(inv.getArgument(0)));
+        when(queueEntryRepository.findFirstEligibleOpponentNullRank(PLAYER_ID))
+                .thenReturn(Mono.just(opponent));
+        when(playerRepository.findById(PLAYER_ID)).thenReturn(Mono.just(p1));
+        when(playerRepository.findById(OPPONENT_ID)).thenReturn(Mono.just(p2));
+        when(gameRepository.save(any(GameEntity.class)))
+                .thenAnswer(inv -> Mono.just(inv.getArgument(0)));
+
+        StepVerifier.create(queueService.joinQueue(PLAYER_ID, DECK_ID))
+                .assertNext(entry -> assertThat(entry.status()).isEqualTo(QueueStatus.MATCHED))
+                .verifyComplete();
+
+        verify(gameRepository).save(any(GameEntity.class));
+        verify(sseBroadcaster).emit(eq(PLAYER_ID), eq("MATCH_FOUND"), any());
+        verify(sseBroadcaster).emit(eq(OPPONENT_ID), eq("MATCH_FOUND"), any());
+    }
+
+    @Test
+    void joinQueue_noMatch_whenNoOpponentInQueue() {
+        when(deckRepository.findById(DECK_ID)).thenReturn(Mono.just(playableDeck()));
+        when(seasonService.getCurrentSeason()).thenReturn(Mono.just(freeSeason()));
+        when(seasonService.getCurrentPhase(any(), any())).thenReturn(SeasonPhase.FREE);
+        when(playerSeasonStatsRepository.findByPlayerIdAndSeasonId(PLAYER_ID, SEASON_ID))
+                .thenReturn(Mono.empty());
+        when(rankCalculationService.getMatchmakingRank(PlayerRank.PENDING, SeasonPhase.FREE))
+                .thenReturn(null);
+        when(queueEntryRepository.findByPlayerIdAndStatus(PLAYER_ID, "WAITING"))
+                .thenReturn(Mono.empty());
+        when(queueEntryRepository.save(any(QueueEntryEntity.class)))
+                .thenAnswer(inv -> Mono.just(inv.getArgument(0)));
+        // No opponent found (default from setUp lenient stub)
+
+        StepVerifier.create(queueService.joinQueue(PLAYER_ID, DECK_ID))
+                .assertNext(entry -> assertThat(entry.status()).isEqualTo(QueueStatus.WAITING))
+                .verifyComplete();
+
+        verify(gameRepository, never()).save(any());
+        verify(sseBroadcaster, never()).emit(any(), any(), any());
+    }
+
+    @Test
+    void joinQueue_noMatch_whenOpponentHasDifferentRankInRanked() {
+        when(deckRepository.findById(DECK_ID)).thenReturn(Mono.just(playableDeck()));
+        when(seasonService.getCurrentSeason()).thenReturn(Mono.just(rankedSeason()));
+        when(seasonService.getCurrentPhase(any(), any())).thenReturn(SeasonPhase.RANKED);
+        when(playerSeasonStatsRepository.findByPlayerIdAndSeasonId(PLAYER_ID, SEASON_ID))
+                .thenReturn(Mono.empty());
+        when(rankCalculationService.getMatchmakingRank(PlayerRank.PENDING, SeasonPhase.RANKED))
+                .thenReturn(PlayerRank.ROOKIE);
+        when(queueEntryRepository.findByPlayerIdAndStatus(PLAYER_ID, "WAITING"))
+                .thenReturn(Mono.empty());
+        when(queueEntryRepository.save(any(QueueEntryEntity.class)))
+                .thenAnswer(inv -> Mono.just(inv.getArgument(0)));
+        // Only ROOKIE opponents searched — none found (lenient stub returns Mono.empty())
+        when(queueEntryRepository.findFirstEligibleOpponentWithRank(PLAYER_ID, "ROOKIE"))
+                .thenReturn(Mono.empty());
+
+        StepVerifier.create(queueService.joinQueue(PLAYER_ID, DECK_ID))
+                .assertNext(entry -> assertThat(entry.status()).isEqualTo(QueueStatus.WAITING))
+                .verifyComplete();
+
+        verify(gameRepository, never()).save(any());
+    }
+
+    @Test
+    void joinQueue_oldestOpponentSelected_queryOrderedByJoinedAt() {
+        // The repository query has ORDER BY joined_at ASC LIMIT 1, so the service
+        // always calls findFirstEligibleOpponent* which returns the oldest opponent.
+        // This test verifies that the service uses the repository result directly
+        // (first result = oldest, since the DB handles ordering).
+        QueueEntryEntity oldest = new QueueEntryEntity(
+                "entry-oldest", OPPONENT_ID, "deck-opp", "WAITING", null,
+                LocalDateTime.now().minusMinutes(5));
+        Player p1 = player(PLAYER_ID, "Player One");
+        Player p2 = player(OPPONENT_ID, "Oldest Opponent");
+
+        when(deckRepository.findById(DECK_ID)).thenReturn(Mono.just(playableDeck()));
+        when(seasonService.getCurrentSeason()).thenReturn(Mono.just(freeSeason()));
+        when(seasonService.getCurrentPhase(any(), any())).thenReturn(SeasonPhase.FREE);
+        when(playerSeasonStatsRepository.findByPlayerIdAndSeasonId(PLAYER_ID, SEASON_ID))
+                .thenReturn(Mono.empty());
+        when(rankCalculationService.getMatchmakingRank(PlayerRank.PENDING, SeasonPhase.FREE))
+                .thenReturn(null);
+        when(queueEntryRepository.findByPlayerIdAndStatus(PLAYER_ID, "WAITING"))
+                .thenReturn(Mono.empty());
+        when(queueEntryRepository.save(any(QueueEntryEntity.class)))
+                .thenAnswer(inv -> Mono.just(inv.getArgument(0)));
+        when(queueEntryRepository.findFirstEligibleOpponentNullRank(PLAYER_ID))
+                .thenReturn(Mono.just(oldest));
+        when(playerRepository.findById(PLAYER_ID)).thenReturn(Mono.just(p1));
+        when(playerRepository.findById(OPPONENT_ID)).thenReturn(Mono.just(p2));
+        when(gameRepository.save(any(GameEntity.class)))
+                .thenAnswer(inv -> Mono.just(inv.getArgument(0)));
+
+        StepVerifier.create(queueService.joinQueue(PLAYER_ID, DECK_ID))
+                .assertNext(entry -> assertThat(entry.status()).isEqualTo(QueueStatus.MATCHED))
+                .verifyComplete();
+
+        // Verify the first eligible opponent query was used (not some other selection)
+        verify(queueEntryRepository).findFirstEligibleOpponentNullRank(PLAYER_ID);
+    }
+
+    // --- checkTimeouts ---
+
+    @Test
+    void checkTimeouts_timedOutEntry_setsStatusTimedOut() {
+        QueueEntryEntity stale = new QueueEntryEntity(
+                "entry-stale", PLAYER_ID, DECK_ID, "WAITING", null,
+                LocalDateTime.now().minusMinutes(2));
+
+        when(queueEntryRepository.findTimedOutEntries(any(LocalDateTime.class)))
+                .thenReturn(Flux.just(stale));
+        when(queueEntryRepository.save(any(QueueEntryEntity.class)))
+                .thenAnswer(inv -> Mono.just(inv.getArgument(0)));
+
+        queueService.checkTimeouts();
+
+        verify(queueEntryRepository).save(any(QueueEntryEntity.class));
+        verify(sseBroadcaster).emit(eq(PLAYER_ID), eq("QUEUE_TIMEOUT"), any());
+        assertThat(stale.getStatus()).isEqualTo(QueueStatus.TIMED_OUT.name());
+    }
+
+    @Test
+    void checkTimeouts_cutoffUsesTimeoutSecondsProperty() {
+        ReflectionTestUtils.setField(queueService, "timeoutSeconds", 60);
+        when(queueEntryRepository.findTimedOutEntries(any(LocalDateTime.class)))
+                .thenReturn(Flux.empty());
+
+        LocalDateTime before = LocalDateTime.now().minusSeconds(61);
+        LocalDateTime after = LocalDateTime.now().minusSeconds(59);
+
+        queueService.checkTimeouts();
+
+        ArgumentCaptor<LocalDateTime> captor = ArgumentCaptor.forClass(LocalDateTime.class);
+        verify(queueEntryRepository).findTimedOutEntries(captor.capture());
+        assertThat(captor.getValue()).isBetween(before, after);
     }
 
     // --- cancelQueue ---
@@ -304,11 +480,15 @@ class QueueServiceTest {
         return new QueueEntryEntity("entry-1", PLAYER_ID, DECK_ID, "WAITING", null, LocalDateTime.now());
     }
 
+    private Player player(String id, String nickname) {
+        return new Player(id, id + "@test.com", "hash", true, null, null, nickname, "US");
+    }
+
     private Season freeSeason() {
         LocalDate start = LocalDate.of(2026, 1, 1);
         return new Season(SEASON_ID, 2026, 1, "S1 2026",
                 start, LocalDate.of(2026, 2, 28),
-                LocalDate.of(2026, 2, 1), // phase2 starts Feb 1
+                LocalDate.of(2026, 2, 1),
                 SeasonStatus.ACTIVE, null);
     }
 
@@ -316,7 +496,7 @@ class QueueServiceTest {
         LocalDate start = LocalDate.of(2026, 1, 1);
         return new Season(SEASON_ID, 2026, 1, "S1 2026",
                 start, LocalDate.of(2026, 2, 28),
-                LocalDate.of(2026, 1, 1), // phase2 starts Jan 1 → always RANKED
+                LocalDate.of(2026, 1, 1),
                 SeasonStatus.ACTIVE, null);
     }
 

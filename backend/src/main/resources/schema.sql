@@ -54,6 +54,19 @@ CREATE TABLE IF NOT EXISTS seasons (
     last_weekly_calculation  DATE
 );
 
+CREATE TABLE IF NOT EXISTS games (
+    id                BIGINT AUTO_INCREMENT PRIMARY KEY,
+    public_id         VARCHAR(36)  NOT NULL UNIQUE,
+    player1_id        VARCHAR(36)  NOT NULL REFERENCES players(id),
+    player1_public_id VARCHAR(36)  NOT NULL,
+    player1_username  VARCHAR(100) NOT NULL,
+    player2_id        VARCHAR(36)  NOT NULL REFERENCES players(id),
+    player2_public_id VARCHAR(36)  NOT NULL,
+    player2_username  VARCHAR(100) NOT NULL,
+    status            VARCHAR(20)  NOT NULL DEFAULT 'WAITING_START',
+    created_at        TIMESTAMP    NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS player_season_stats (
     id                VARCHAR(36)  PRIMARY KEY,
     player_id         VARCHAR(36)  NOT NULL REFERENCES players(id),

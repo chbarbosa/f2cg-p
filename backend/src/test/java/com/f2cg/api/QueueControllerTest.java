@@ -22,6 +22,7 @@ class QueueControllerTest extends BaseControllerTest {
     @BeforeEach
     void setup() {
         databaseClient.sql("DELETE FROM queue_entries").fetch().rowsUpdated().block();
+        databaseClient.sql("DELETE FROM games").fetch().rowsUpdated().block();
         databaseClient.sql("DELETE FROM player_season_stats").fetch().rowsUpdated().block();
         databaseClient.sql("DELETE FROM seasons").fetch().rowsUpdated().block();
         databaseClient.sql("DELETE FROM decks").fetch().rowsUpdated().block();
@@ -34,6 +35,7 @@ class QueueControllerTest extends BaseControllerTest {
     @AfterEach
     void cleanup() {
         databaseClient.sql("DELETE FROM queue_entries").fetch().rowsUpdated().block();
+        databaseClient.sql("DELETE FROM games").fetch().rowsUpdated().block();
         databaseClient.sql("DELETE FROM player_season_stats").fetch().rowsUpdated().block();
         databaseClient.sql("DELETE FROM seasons").fetch().rowsUpdated().block();
         databaseClient.sql("DELETE FROM decks").fetch().rowsUpdated().block();

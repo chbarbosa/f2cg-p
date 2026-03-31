@@ -1,18 +1,32 @@
 import React, { useEffect, useState } from 'react';
 import { useQueueStore } from '../store/queueStore';
 import { useAuthStore } from '../store/authStore';
+import { useQueueSSE } from '../hooks/useQueueSSE';
 
 interface Props {
   onCancelled: () => void;
+  onMatchFound: (gamePublicId: string) => void;
 }
 
-export function QueueWaiting({ onCancelled }: Props) {
+export function QueueWaiting({ onCancelled, onMatchFound }: Props) {
   const { cancel, loading } = useQueueStore();
   const [showConfirm, setShowConfirm] = useState(false);
+  const { matchFound, timedOut } = useQueueSSE();
+
+  useEffect(() => {
+    if (matchFound) {
+      onMatchFound(matchFound.gamePublicId);
+    }
+  }, [matchFound, onMatchFound]);
 
   const handleConfirmCancel = async () => {
     await cancel();
     setShowConfirm(false);
+    onCancelled();
+  };
+
+  const handleBackToHome = async () => {
+    await cancel();
     onCancelled();
   };
 
@@ -56,6 +70,18 @@ export function QueueWaiting({ onCancelled }: Props) {
             <div style={styles.modalActions}>
               <button style={styles.stayBtn} onClick={() => setShowConfirm(false)}>Stay</button>
               <button style={styles.confirmBtn} onClick={handleConfirmCancel}>Leave</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {timedOut && (
+        <div style={styles.overlay}>
+          <div style={styles.modal}>
+            <p style={styles.modalTitle}>No opponent found</p>
+            <p style={styles.modalSub}>We could not find an opponent. Please try again.</p>
+            <div style={styles.modalActions}>
+              <button style={styles.confirmBtn} onClick={handleBackToHome}>Back to Home</button>
             </div>
           </div>
         </div>

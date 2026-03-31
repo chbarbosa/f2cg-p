@@ -1,5 +1,5 @@
 package com.f2cg.domain.queue;
 
 public enum QueueStatus {
-    WAITING, MATCHED, CANCELLED
+    WAITING, MATCHED, CANCELLED, TIMED_OUT
 }
