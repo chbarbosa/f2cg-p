@@ -6,6 +6,7 @@ import com.f2cg.domain.season.SeasonStatus;
 import com.f2cg.infrastructure.r2dbc.PlayerSeasonStatsRepository;
 import com.f2cg.infrastructure.r2dbc.SeasonEntity;
 import com.f2cg.infrastructure.r2dbc.SeasonRepository;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -26,12 +27,14 @@ public class SeasonService {
         this.playerSeasonStatsRepository = playerSeasonStatsRepository;
     }
 
+    @Cacheable("currentSeason")
     public Mono<Season> getCurrentSeason() {
         return seasonRepository.findByStatus("ACTIVE")
                 .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "No active season")))
                 .map(this::toDomain);
     }
 
+    @Cacheable(value = "currentPhase", key = "#season.id() + '_' + #today")
     public SeasonPhase getCurrentPhase(Season season, LocalDate today) {
         return today.isBefore(season.phase2StartDate()) ? SeasonPhase.FREE : SeasonPhase.RANKED;
     }
@@ -42,6 +45,7 @@ public class SeasonService {
                 .map(this::toDomain);
     }
 
+    @Cacheable(value = "seasons", key = "#id")
     public Mono<Season> getSeasonById(String id) {
         return seasonRepository.findById(id)
                 .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Season not found")))

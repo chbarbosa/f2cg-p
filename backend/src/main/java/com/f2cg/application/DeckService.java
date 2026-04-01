@@ -8,6 +8,7 @@ import com.f2cg.infrastructure.r2dbc.CardEntityMapper;
 import com.f2cg.infrastructure.r2dbc.CardRepository;
 import com.f2cg.infrastructure.r2dbc.DeckEntity;
 import com.f2cg.infrastructure.r2dbc.DeckRepository;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -36,6 +37,7 @@ public class DeckService {
         this.cardEntityMapper = cardEntityMapper;
     }
 
+    @Cacheable("cardsByTheme")
     public Flux<Card> getCardsByTheme(String theme) {
         return cardRepository.findByTheme(theme)
                 .map(cardEntityMapper::toDomain);
