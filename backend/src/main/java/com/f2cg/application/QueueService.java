@@ -61,6 +61,17 @@ public class QueueService {
     }
 
     public Mono<QueueEntry> joinQueue(String playerId, String deckId) {
+        return playerRepository.findById(playerId)
+                .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Player not found")))
+                .flatMap(player -> {
+                    if (player.getNickname() == null || player.getNickname().isBlank()) {
+                        return Mono.error(new ResponseStatusException(HttpStatus.BAD_REQUEST, "A nickname is required to play"));
+                    }
+                    return joinQueueInternal(playerId, deckId);
+                });
+    }
+
+    private Mono<QueueEntry> joinQueueInternal(String playerId, String deckId) {
         return deckRepository.findById(deckId)
                 .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Deck not found")))
                 .flatMap(deck -> {

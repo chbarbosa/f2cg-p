@@ -29,6 +29,7 @@ class QueueControllerTest extends BaseControllerTest {
         databaseClient.sql("DELETE FROM players").fetch().rowsUpdated().block();
 
         token = registerAndLogin(QUEUE_USER);
+        setNickname(token, "QueueUser");
         playableDeckId = createPlayableDeck(token);
     }
 
@@ -213,6 +214,7 @@ class QueueControllerTest extends BaseControllerTest {
 
         // Player 2 (ROOKIE)
         String token2 = registerAndLogin(QUEUE_USER_2);
+        setNickname(token2, "QueueUser2");
         String deck2 = createPlayableDeck(token2);
         String player2Id = playerRepository.findByUsername(QUEUE_USER_2)
                 .map(p -> p.getId())
@@ -240,7 +242,31 @@ class QueueControllerTest extends BaseControllerTest {
                 .jsonPath("$.matchmakingRank").isEqualTo("ROOKIE");
     }
 
+    @Test
+    void joinQueue_withoutNickname_returns400() {
+        insertFreePhaseSeason();
+
+        String noNicknameToken = registerAndLogin("nonickname@test.com");
+        String deckId = createPlayableDeck(noNicknameToken);
+
+        webTestClient.post().uri(QUEUE_URL)
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer " + noNicknameToken)
+                .bodyValue("{\"deckId\":\"" + deckId + "\"}")
+                .exchange()
+                .expectStatus().isBadRequest();
+    }
+
     // --- helpers ---
+
+    private void setNickname(String authToken, String nickname) {
+        webTestClient.put().uri("/api/player/profile")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer " + authToken)
+                .bodyValue("{\"nickname\":\"" + nickname + "\"}")
+                .exchange()
+                .expectStatus().isNoContent();
+    }
 
     private String createPlayableDeck(String authToken) {
         String cardIdsJson = buildCardIdsJson(20);
