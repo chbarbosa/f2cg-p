@@ -4,6 +4,7 @@ import com.f2cg.api.dto.JoinQueueRequest;
 import com.f2cg.api.dto.QueueEntryResponse;
 import com.f2cg.application.QueueService;
 import com.f2cg.infrastructure.JwtUtil;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
@@ -23,7 +24,7 @@ public class QueueController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public Mono<QueueEntryResponse> joinQueue(
-            @RequestBody JoinQueueRequest req,
+            @Valid @RequestBody JoinQueueRequest req,
             @RequestHeader(value = "Authorization", required = false) String auth) {
         String playerId = jwtUtil.extractPlayerIdFromHeader(auth);
         return queueService.joinQueue(playerId, req.deckId()).map(QueueEntryResponse::from);

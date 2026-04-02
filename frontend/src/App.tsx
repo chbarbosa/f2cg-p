@@ -49,6 +49,7 @@ export default function App() {
   };
 
   const hasPlayableDeck = decks.some(d => d.status === 'PLAYABLE');
+  const isPlayBlocked = !!nickname && !hasPlayableDeck;
 
   if (username) {
     if (view === 'deckList') {
@@ -114,10 +115,10 @@ export default function App() {
         <div style={styles.card}>
           <h2 style={styles.welcome}>Welcome, {username}!</h2>
           <p style={styles.sub}>Player ID: <code style={styles.code}>{playerId}</code></p>
-          <div style={styles.playWrapper} title={!!nickname && !hasPlayableDeck ? 'You need at least one playable deck to battle' : undefined}>
+          <div style={styles.playWrapper} title={isPlayBlocked ? 'You need at least one playable deck to battle' : undefined}>
             <button
-              style={!!nickname && !hasPlayableDeck ? { ...styles.playBtn, opacity: 0.4, cursor: 'not-allowed' } : styles.playBtn}
-              disabled={!!nickname && !hasPlayableDeck}
+              style={isPlayBlocked ? { ...styles.playBtn, opacity: 0.4, cursor: 'not-allowed' } : styles.playBtn}
+              disabled={isPlayBlocked}
               onClick={() => setView(nickname ? 'deckSelector' : 'profileSetup')}
             >
               Play

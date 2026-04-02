@@ -1,3 +1,8 @@
 package com.f2cg.api.dto;
 
-public record JoinQueueRequest(String deckId) {}
+import jakarta.validation.constraints.NotBlank;
+
+public record JoinQueueRequest(
+        @NotBlank(message = "deckId is required")
+        String deckId
+) {}

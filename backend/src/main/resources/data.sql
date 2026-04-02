@@ -67,6 +67,40 @@ VALUES
  5, 2, 3, 'PENDING', 'PENDING', 0);
 
 -- ============================================================
+-- TEST PLAYER: test02@gmail.com / pass123
+-- ============================================================
+
+INSERT INTO players (id, username, password_hash, active, nickname, country) VALUES
+('aaaaaaaa-0002-0000-0000-000000000008', 'test02@gmail.com',
+ '$2b$10$aHTGws9W3WlsdU7wMW/izeIrr6fEcG2wzRK7zqKNaYcrsRioJKgF.',
+ TRUE, 'TestPlayer02', 'BR');
+
+INSERT INTO player_season_stats
+    (id, player_id, season_id, total_matches, victories, defeats, rank, highest_rank, matches_this_week)
+VALUES
+('cccccccc-0002-0000-0000-000000000007',
+ 'aaaaaaaa-0002-0000-0000-000000000008',
+ 'bbbbbbbb-0001-0000-0000-000000000007',
+ 0, 0, 0, 'PENDING', 'PENDING', 0);
+
+-- ============================================================
+-- TEST PLAYER: test03@gmail.com / pass123
+-- ============================================================
+
+INSERT INTO players (id, username, password_hash, active, nickname, country) VALUES
+('aaaaaaaa-0003-0000-0000-000000000008', 'test03@gmail.com',
+ '$2b$10$aHTGws9W3WlsdU7wMW/izeIrr6fEcG2wzRK7zqKNaYcrsRioJKgF.',
+ TRUE, 'TestPlayer03', 'BR');
+
+INSERT INTO player_season_stats
+    (id, player_id, season_id, total_matches, victories, defeats, rank, highest_rank, matches_this_week)
+VALUES
+('cccccccc-0003-0000-0000-000000000007',
+ 'aaaaaaaa-0003-0000-0000-000000000008',
+ 'bbbbbbbb-0001-0000-0000-000000000007',
+ 0, 0, 0, 'PENDING', 'PENDING', 0);
+
+-- ============================================================
 
 -- WARRIOR cards (31: 20 units, 6 buffs, 5 debuffs)
 INSERT INTO cards (id, name, mana_cost, card_type, theme, unit_class, attack, defense, effect_type, effect_value) VALUES
