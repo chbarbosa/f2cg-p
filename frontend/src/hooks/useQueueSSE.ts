@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useAuthStore } from '../store/authStore';
-import { MatchFoundPayload } from '../api/types';
+import type { MatchFoundPayload } from '../api/types';
 
 interface QueueSSEState {
   matchFound: MatchFoundPayload | null;

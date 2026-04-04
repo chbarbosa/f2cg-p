@@ -41,26 +41,6 @@ class RankCalculationServiceTest {
 
     private RankCalculationService rankCalculationService;
 
-    // Season in FREE phase (today is in first month)
-    private static final Season FREE_SEASON = new Season(
-            "s-1", 2026, 1, null,
-            LocalDate.of(2026, 1, 1),
-            LocalDate.of(2026, 2, 28),
-            LocalDate.of(2026, 2, 1),
-            SeasonStatus.ACTIVE,
-            null
-    );
-
-    // Season in RANKED phase (today is in second month)
-    private static final Season RANKED_SEASON = new Season(
-            "s-2", 2026, 2, null,
-            LocalDate.of(2026, 3, 1),
-            LocalDate.of(2026, 4, 30),
-            LocalDate.of(2026, 4, 1),
-            SeasonStatus.ACTIVE,
-            null
-    );
-
     @BeforeEach
     void setUp() {
         rankCalculationService = new RankCalculationService(
@@ -523,9 +503,5 @@ class RankCalculationServiceTest {
         e.setStatus("ACTIVE");
         e.setLastWeeklyCalculation(null);
         return e;
-    }
-
-    private boolean inactive(PlayerSeasonStatsEntity e) {
-        return e.getMatchesThisWeek() < 15;
     }
 }

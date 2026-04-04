@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { getGame } from '../api/game';
-import { GameResponse } from '../api/types';
+import type { GameResponse } from '../api/types';
 
 interface Props {
   gamePublicId: string;
