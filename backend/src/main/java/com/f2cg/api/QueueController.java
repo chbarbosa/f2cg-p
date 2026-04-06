@@ -35,7 +35,7 @@ public class QueueController {
     public Mono<Void> cancelQueue(
             @RequestHeader(value = "Authorization", required = false) String auth) {
         String playerId = jwtUtil.extractPlayerIdFromHeader(auth);
-        return queueService.cancelQueue(playerId).then();
+        return queueService.cancelQueue(playerId);
     }
 
     @GetMapping("/status")

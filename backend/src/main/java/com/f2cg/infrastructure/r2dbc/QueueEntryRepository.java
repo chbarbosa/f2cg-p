@@ -1,5 +1,6 @@
 package com.f2cg.infrastructure.r2dbc;
 
+import org.springframework.data.r2dbc.repository.Modifying;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import reactor.core.publisher.Flux;
@@ -11,6 +12,14 @@ import java.util.List;
 public interface QueueEntryRepository extends ReactiveCrudRepository<QueueEntryEntity, String> {
 
     Mono<QueueEntryEntity> findByPlayerIdAndStatus(String playerId, String status);
+
+    @Modifying
+    @Query("UPDATE queue_entries SET status = 'CANCELLED' WHERE player_id = :playerId AND status = 'WAITING'")
+    Mono<Integer> cancelIfWaiting(String playerId);
+
+    @Modifying
+    @Query("UPDATE queue_entries SET status = 'MATCHED' WHERE id = :id AND status = 'WAITING'")
+    Mono<Integer> claimForMatch(String id);
 
     Flux<QueueEntryEntity> findByPlayerIdAndStatusIn(String playerId, List<String> statuses);
 

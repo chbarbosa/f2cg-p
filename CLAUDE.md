@@ -43,3 +43,4 @@ Clean Architecture with four layers:
 - All I/O is **reactive** (`Mono`/`Flux`): Spring WebFlux for HTTP, R2DBC for database. Avoid blocking calls.
 - SSE is used instead of WebSockets (unidirectional push is sufficient for this game).
 - H2 in-memory DB for zero-config development; schema auto-initialized via Spring SQL init.
+- **No `@Scheduled` background jobs for game logic** — prefer reactive, event-driven checks. Example: disconnect detection is done inside `GameService.heartbeat()` (checks opponent liveness on every heartbeat) rather than a scheduler scanning all games. Schedulers don't scale; reactive checks are proportional to actual activity.

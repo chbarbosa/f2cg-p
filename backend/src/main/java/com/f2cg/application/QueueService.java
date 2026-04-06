@@ -123,46 +123,46 @@ public class QueueService {
                 ? queueEntryRepository.findFirstEligibleOpponentWithRank(joiner.getPlayerId(), matchmakingRank.name())
                 : queueEntryRepository.findFirstEligibleOpponentNullRank(joiner.getPlayerId());
 
-        return opponentSearch.flatMap(opponent ->
-                playerRepository.findById(joiner.getPlayerId())
-                        .zipWith(playerRepository.findById(opponent.getPlayerId()))
-                        .flatMap(players -> {
-                            var p1 = players.getT1();
-                            var p2 = players.getT2();
-                            String p1Username = p1.getNickname() != null ? p1.getNickname() : p1.getUsername();
-                            String p2Username = p2.getNickname() != null ? p2.getNickname() : p2.getUsername();
+        return opponentSearch
+                .flatMap(opponent -> queueEntryRepository.claimForMatch(opponent.getId())
+                        .filter(n -> n > 0)
+                        .flatMap(__ -> playerRepository.findById(joiner.getPlayerId())
+                                .zipWith(playerRepository.findById(opponent.getPlayerId()))
+                                .flatMap(players -> {
+                                    var p1 = players.getT1();
+                                    var p2 = players.getT2();
+                                    String p1Username = p1.getNickname() != null ? p1.getNickname() : p1.getUsername();
+                                    String p2Username = p2.getNickname() != null ? p2.getNickname() : p2.getUsername();
 
-                            String gamePublicId = UUID.randomUUID().toString();
-                            GameEntity game = new GameEntity(
-                                    gamePublicId,
-                                    p1.getId(), p1.getId(), p1Username,
-                                    p2.getId(), p2.getId(), p2Username,
-                                    GameStatus.WAITING_START.name(),
-                                    LocalDateTime.now()
-                            );
-                            return gameRepository.save(game)
-                                    .flatMap(savedGame -> {
-                                        joiner.setStatus(QueueStatus.MATCHED.name());
-                                        opponent.setStatus(QueueStatus.MATCHED.name());
-                                        return queueEntryRepository.save(joiner)
-                                                .then(queueEntryRepository.save(opponent))
-                                                .doOnSuccess(ignored -> {
-                                                    Map<String, String> matchFoundPayload1 = Map.of(
-                                                            "gamePublicId", gamePublicId,
-                                                            "opponentUsername", p2Username
-                                                    );
-                                                    Map<String, String> matchFoundPayload2 = Map.of(
-                                                            "gamePublicId", gamePublicId,
-                                                            "opponentUsername", p1Username
-                                                    );
-                                                    sseBroadcaster.emit(p1.getId(), "MATCH_FOUND", matchFoundPayload1);
-                                                    sseBroadcaster.emit(p2.getId(), "MATCH_FOUND", matchFoundPayload2);
-                                                    sseBroadcaster.complete(p1.getId());
-                                                    sseBroadcaster.complete(p2.getId());
-                                                });
-                                    });
-                        })
-        ).then();
+                                    String gamePublicId = UUID.randomUUID().toString();
+                                    GameEntity game = new GameEntity(
+                                            gamePublicId,
+                                            p1.getId(), p1.getId(), p1Username,
+                                            p2.getId(), p2.getId(), p2Username,
+                                            GameStatus.WAITING_START.name(),
+                                            LocalDateTime.now()
+                                    );
+                                    return gameRepository.save(game)
+                                            .flatMap(savedGame -> {
+                                                joiner.setStatus(QueueStatus.MATCHED.name());
+                                                return queueEntryRepository.save(joiner)
+                                                        .doOnSuccess(ignored -> {
+                                                            Map<String, String> matchFoundPayload1 = Map.of(
+                                                                    "gamePublicId", gamePublicId,
+                                                                    "opponentUsername", p2Username
+                                                            );
+                                                            Map<String, String> matchFoundPayload2 = Map.of(
+                                                                    "gamePublicId", gamePublicId,
+                                                                    "opponentUsername", p1Username
+                                                            );
+                                                            sseBroadcaster.emit(p1.getId(), "MATCH_FOUND", matchFoundPayload1);
+                                                            sseBroadcaster.emit(p2.getId(), "MATCH_FOUND", matchFoundPayload2);
+                                                            sseBroadcaster.complete(p1.getId());
+                                                            sseBroadcaster.complete(p2.getId());
+                                                        });
+                                            });
+                                })))
+                .then();
     }
 
     @Scheduled(fixedDelay = 10_000)
@@ -182,15 +182,11 @@ public class QueueService {
                 .subscribe();
     }
 
-    public Mono<QueueEntry> cancelQueue(String playerId) {
-        return queueEntryRepository.findByPlayerIdAndStatus(playerId, QueueStatus.WAITING.name())
-                .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "No active queue entry")))
-                .flatMap(entity -> {
-                    entity.setStatus(QueueStatus.CANCELLED.name());
-                    return queueEntryRepository.save(entity);
-                })
-                .map(this::toDomain);
+    public Mono<Void> cancelQueue(String playerId) {
+        return queueEntryRepository.cancelIfWaiting(playerId)
+                .flatMap(updated -> updated == 0
+                        ? Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "No active queue entry"))
+                        : Mono.empty());
     }
 
     public Mono<QueueEntry> getStatus(String playerId) {

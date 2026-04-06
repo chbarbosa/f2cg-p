@@ -28,6 +28,12 @@ public class GameEntity implements Persistable<Long> {
     @Column("player2_username")
     private String player2Username;
     private String status;
+    @Column("winner_id")
+    private String winnerId;
+    @Column("player1_heartbeat")
+    private LocalDateTime player1Heartbeat;
+    @Column("player2_heartbeat")
+    private LocalDateTime player2Heartbeat;
     @Column("created_at")
     private LocalDateTime createdAt;
 
@@ -77,5 +83,11 @@ public class GameEntity implements Persistable<Long> {
     public void setPlayer2PublicId(String player2PublicId) { this.player2PublicId = player2PublicId; }
     public void setPlayer2Username(String player2Username) { this.player2Username = player2Username; }
     public void setStatus(String status) { this.status = status; }
+    public String getWinnerId() { return winnerId; }
+    public void setWinnerId(String winnerId) { this.winnerId = winnerId; }
+    public LocalDateTime getPlayer1Heartbeat() { return player1Heartbeat; }
+    public void setPlayer1Heartbeat(LocalDateTime player1Heartbeat) { this.player1Heartbeat = player1Heartbeat; }
+    public LocalDateTime getPlayer2Heartbeat() { return player2Heartbeat; }
+    public void setPlayer2Heartbeat(LocalDateTime player2Heartbeat) { this.player2Heartbeat = player2Heartbeat; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 }

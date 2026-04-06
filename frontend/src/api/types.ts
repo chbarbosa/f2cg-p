@@ -76,13 +76,14 @@ export interface QueueEntryResponse {
   joinedAt: string;
 }
 
-export type GameStatus = 'WAITING_START' | 'IN_PROGRESS' | 'FINISHED';
+export type GameStatus = 'WAITING_START' | 'IN_PROGRESS' | 'FINISHED' | 'CANCELLED';
 
 export interface GameResponse {
   publicId: string;
   player1Username: string;
   player2Username: string;
   status: GameStatus;
+  winnerId: string | null;
 }
 
 export interface MatchFoundPayload {

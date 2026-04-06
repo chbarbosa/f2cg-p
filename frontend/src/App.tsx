@@ -107,7 +107,10 @@ export default function App() {
     }
 
     if (view === 'game' && gamePublicId) {
-      return <GameScreen gamePublicId={gamePublicId} />;
+      return <GameScreen
+        gamePublicId={gamePublicId}
+        onGameOver={() => { setGamePublicId(null); setView('home'); }}
+      />;
     }
 
     return (

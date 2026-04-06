@@ -55,16 +55,19 @@ CREATE TABLE IF NOT EXISTS seasons (
 );
 
 CREATE TABLE IF NOT EXISTS games (
-    id                BIGINT AUTO_INCREMENT PRIMARY KEY,
-    public_id         VARCHAR(36)  NOT NULL UNIQUE,
-    player1_id        VARCHAR(36)  NOT NULL REFERENCES players(id),
-    player1_public_id VARCHAR(36)  NOT NULL,
-    player1_username  VARCHAR(100) NOT NULL,
-    player2_id        VARCHAR(36)  NOT NULL REFERENCES players(id),
-    player2_public_id VARCHAR(36)  NOT NULL,
-    player2_username  VARCHAR(100) NOT NULL,
-    status            VARCHAR(20)  NOT NULL DEFAULT 'WAITING_START',
-    created_at        TIMESTAMP    NOT NULL
+    id                  BIGINT AUTO_INCREMENT PRIMARY KEY,
+    public_id           VARCHAR(36)  NOT NULL UNIQUE,
+    player1_id          VARCHAR(36)  NOT NULL REFERENCES players(id),
+    player1_public_id   VARCHAR(36)  NOT NULL,
+    player1_username    VARCHAR(100) NOT NULL,
+    player2_id          VARCHAR(36)  NOT NULL REFERENCES players(id),
+    player2_public_id   VARCHAR(36)  NOT NULL,
+    player2_username    VARCHAR(100) NOT NULL,
+    status              VARCHAR(20)  NOT NULL DEFAULT 'WAITING_START',
+    winner_id           VARCHAR(36)  NULL,
+    player1_heartbeat   TIMESTAMP    NULL,
+    player2_heartbeat   TIMESTAMP    NULL,
+    created_at          TIMESTAMP    NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS player_season_stats (

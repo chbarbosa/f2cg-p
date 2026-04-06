@@ -420,21 +420,16 @@ class QueueServiceTest {
     // --- cancelQueue ---
 
     @Test
-    void cancelQueue_existingWaitingEntry_setsStatusCancelled() {
-        when(queueEntryRepository.findByPlayerIdAndStatus(PLAYER_ID, "WAITING"))
-                .thenReturn(Mono.just(waitingEntry()));
-        when(queueEntryRepository.save(any(QueueEntryEntity.class)))
-                .thenAnswer(inv -> Mono.just(inv.getArgument(0)));
+    void cancelQueue_existingWaitingEntry_completes() {
+        when(queueEntryRepository.cancelIfWaiting(PLAYER_ID)).thenReturn(Mono.just(1));
 
         StepVerifier.create(queueService.cancelQueue(PLAYER_ID))
-                .assertNext(entry -> assertThat(entry.status()).isEqualTo(QueueStatus.CANCELLED))
                 .verifyComplete();
     }
 
     @Test
     void cancelQueue_noActiveEntry_returns404() {
-        when(queueEntryRepository.findByPlayerIdAndStatus(PLAYER_ID, "WAITING"))
-                .thenReturn(Mono.empty());
+        when(queueEntryRepository.cancelIfWaiting(PLAYER_ID)).thenReturn(Mono.just(0));
 
         StepVerifier.create(queueService.cancelQueue(PLAYER_ID))
                 .expectErrorMatches(ex -> ex instanceof ResponseStatusException rse
