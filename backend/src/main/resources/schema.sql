@@ -82,3 +82,18 @@ CREATE TABLE IF NOT EXISTS player_season_stats (
     matches_this_week INT          NOT NULL DEFAULT 0,
     last_rank_update  TIMESTAMP
 );
+
+-- queue_entries: hit on every matchmaking tick
+CREATE INDEX IF NOT EXISTS idx_queue_player_status ON queue_entries(player_id, status);
+CREATE INDEX IF NOT EXISTS idx_queue_matchmaking   ON queue_entries(status, matchmaking_rank, joined_at);
+
+-- games: OR condition across two player columns without index = full scan
+CREATE INDEX IF NOT EXISTS idx_games_player1 ON games(player1_id, status, created_at);
+CREATE INDEX IF NOT EXISTS idx_games_player2 ON games(player2_id, status, created_at);
+
+-- decks: findByPlayerId / countByPlayerId
+CREATE INDEX IF NOT EXISTS idx_decks_player ON decks(player_id);
+
+-- player_season_stats: composite and single-column lookups
+CREATE INDEX IF NOT EXISTS idx_pss_player_season ON player_season_stats(player_id, season_id);
+CREATE INDEX IF NOT EXISTS idx_pss_season        ON player_season_stats(season_id);
