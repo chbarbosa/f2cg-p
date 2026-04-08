@@ -12,6 +12,9 @@ async function extractError(res: Response): Promise<never> {
   const text = await res.text();
   let message = res.statusText;
   try { message = JSON.parse(text).message || message; } catch { message = text || message; }
+  if (res.status === 401) {
+    useAuthStore.getState().expireSession();
+  }
   throw new ApiError(res.status, message);
 }
 

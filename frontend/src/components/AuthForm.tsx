@@ -30,6 +30,7 @@ export function AuthForm() {
   const [loading, setLoading] = useState(false);
   const setAuth = useAuthStore((s) => s.login);
   const setPendingEmail = useAuthStore((s) => s.setPendingEmail);
+  const sessionExpired = useAuthStore((s) => s.sessionExpired);
 
   async function handleAuthSubmit(e: React.SyntheticEvent) {
     e.preventDefault();
@@ -100,6 +101,7 @@ export function AuthForm() {
   return (
     <div style={styles.card}>
       <h1 style={styles.title}>F2CG</h1>
+      {sessionExpired && <ErrorMessage message="Your session has expired. Please log in again." />}
       <div style={styles.tabs}>
         <button
           style={{ ...styles.tab, ...(tab === 'login' ? styles.activeTab : {}) }}
