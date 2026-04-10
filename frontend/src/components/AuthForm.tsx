@@ -68,12 +68,12 @@ export function AuthForm() {
 
   if (step === 'verify') {
     return (
-      <div style={styles.card}>
-        <h1 style={styles.title}>F2CG</h1>
-        <p style={styles.hint}>A verification code was sent to <strong>{email}</strong></p>
-        <form onSubmit={handleVerifySubmit} style={styles.form}>
+      <div className="surface-card surface-card--narrow">
+        <h1 className="auth-title">F2CG</h1>
+        <p className="text-muted" style={{ textAlign: 'center' }}>A verification code was sent to <strong>{email}</strong></p>
+        <form onSubmit={handleVerifySubmit} className="form-stack">
           <input
-            style={styles.input}
+            className="form-input"
             placeholder="5-digit code"
             value={code}
             onChange={(e) => setCode(e.target.value)}
@@ -83,11 +83,11 @@ export function AuthForm() {
             autoFocus
           />
           {error && <ErrorMessage message={error} />}
-          <button style={styles.button} type="submit" disabled={loading}>
+          <button className="btn btn--primary-blue" type="submit" disabled={loading}>
             {loading ? '...' : 'Verify'}
           </button>
           <button
-            style={styles.linkButton}
+            className="btn--link"
             type="button"
             onClick={() => { setStep('auth'); setError(''); setCode(''); }}
           >
@@ -99,26 +99,26 @@ export function AuthForm() {
   }
 
   return (
-    <div style={styles.card}>
-      <h1 style={styles.title}>F2CG</h1>
+    <div className="surface-card surface-card--narrow">
+      <h1 className="auth-title">F2CG</h1>
       {sessionExpired && <ErrorMessage message="Your session has expired. Please log in again." />}
-      <div style={styles.tabs}>
+      <div className="auth-tabs">
         <button
-          style={{ ...styles.tab, ...(tab === 'login' ? styles.activeTab : {}) }}
+          className={`auth-tab${tab === 'login' ? ' auth-tab--active' : ''}`}
           onClick={() => { setTab('login'); setError(''); }}
         >
           Login
         </button>
         <button
-          style={{ ...styles.tab, ...(tab === 'register' ? styles.activeTab : {}) }}
+          className={`auth-tab${tab === 'register' ? ' auth-tab--active' : ''}`}
           onClick={() => { setTab('register'); setError(''); }}
         >
           Register
         </button>
       </div>
-      <form onSubmit={handleAuthSubmit} style={styles.form}>
+      <form onSubmit={handleAuthSubmit} className="form-stack">
         <input
-          style={styles.input}
+          className="form-input"
           type="email"
           placeholder="Email"
           value={email}
@@ -127,7 +127,7 @@ export function AuthForm() {
           autoFocus
         />
         <input
-          style={styles.input}
+          className="form-input"
           type="password"
           placeholder="Password"
           value={password}
@@ -135,66 +135,10 @@ export function AuthForm() {
           required
         />
         {error && <ErrorMessage message={error} />}
-        <button style={styles.button} type="submit" disabled={loading}>
+        <button className="btn btn--primary-blue" type="submit" disabled={loading}>
           {loading ? '...' : tab === 'login' ? 'Login' : 'Register'}
         </button>
       </form>
     </div>
   );
 }
-
-const styles: Record<string, React.CSSProperties> = {
-  card: {
-    background: '#1e1e2e',
-    border: '1px solid #313244',
-    borderRadius: 12,
-    padding: '2rem',
-    width: 320,
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '1rem',
-  },
-  title: { margin: 0, textAlign: 'center', color: '#cdd6f4', fontSize: '1.5rem' },
-  hint: { margin: 0, color: '#a6adc8', fontSize: '0.85rem', textAlign: 'center' },
-  tabs: { display: 'flex', gap: 8 },
-  tab: {
-    flex: 1,
-    padding: '0.5rem',
-    background: '#313244',
-    border: 'none',
-    borderRadius: 6,
-    color: '#a6adc8',
-    cursor: 'pointer',
-    fontSize: '0.9rem',
-  },
-  activeTab: { background: '#89b4fa', color: '#1e1e2e', fontWeight: 600 },
-  form: { display: 'flex', flexDirection: 'column', gap: '0.75rem' },
-  input: {
-    padding: '0.6rem 0.8rem',
-    borderRadius: 6,
-    border: '1px solid #45475a',
-    background: '#313244',
-    color: '#cdd6f4',
-    fontSize: '0.95rem',
-    outline: 'none',
-  },
-  button: {
-    padding: '0.6rem',
-    borderRadius: 6,
-    border: 'none',
-    background: '#89b4fa',
-    color: '#1e1e2e',
-    fontWeight: 600,
-    fontSize: '0.95rem',
-    cursor: 'pointer',
-  },
-  linkButton: {
-    padding: '0.4rem',
-    background: 'none',
-    border: 'none',
-    color: '#a6adc8',
-    fontSize: '0.85rem',
-    cursor: 'pointer',
-    textAlign: 'center',
-  },
-};

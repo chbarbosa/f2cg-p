@@ -54,7 +54,7 @@ export default function App() {
   if (username) {
     if (view === 'deckList') {
       return (
-        <div style={styles.page}>
+        <div className="page-bg">
           <DeckList onBack={handleHome} onNew={handleEditDeck} onEdit={handleEditDeck} />
         </div>
       );
@@ -62,7 +62,7 @@ export default function App() {
 
     if (view === 'deckBuilder') {
       return (
-        <div style={styles.page}>
+        <div className="page-bg">
           <DeckBuilder onCancel={handleListDecks} onSaved={handleListDecks} />
         </div>
       );
@@ -70,7 +70,7 @@ export default function App() {
 
     if (view === 'profileSetup') {
       return (
-        <div style={styles.center}>
+        <div className="page-center">
           <ProfileSetup onDone={() => setView('deckSelector')} />
         </div>
       );
@@ -82,7 +82,7 @@ export default function App() {
 
     if (view === 'performance') {
       return (
-        <div style={styles.page}>
+        <div className="page-bg">
           <PerformanceScreen onBack={handleHome} />
         </div>
       );
@@ -90,7 +90,7 @@ export default function App() {
 
     if (view === 'deckSelector') {
       return (
-        <div style={styles.page}>
+        <div className="page-bg">
           <DeckSelector
             onReady={handleReady}
             onBack={handleHome}
@@ -114,118 +114,37 @@ export default function App() {
     }
 
     return (
-      <div style={styles.center}>
-        <div style={styles.card}>
-          <h2 style={styles.welcome}>Welcome, {username}!</h2>
-          <p style={styles.sub}>Player ID: <code style={styles.code}>{playerId}</code></p>
-          <div style={styles.playWrapper} title={isPlayBlocked ? 'You need at least one playable deck to battle' : undefined}>
+      <div className="page-center">
+        <div className="surface-card surface-card--narrow">
+          <h2 className="app-welcome">Welcome, {username}!</h2>
+          <p className="app-sub">Player ID: <code className="app-code-chip">{playerId}</code></p>
+          <div className="app-play-wrapper" title={isPlayBlocked ? 'You need at least one playable deck to battle' : undefined}>
             <button
-              style={isPlayBlocked ? { ...styles.playBtn, opacity: 0.4, cursor: 'not-allowed' } : styles.playBtn}
+              className={`btn btn--primary-green btn--full-width${isPlayBlocked ? ' btn--disabled' : ''}`}
               disabled={isPlayBlocked}
               onClick={() => setView(nickname ? 'deckSelector' : 'profileSetup')}
             >
               Play
             </button>
           </div>
-          <div style={styles.playWrapper} title={!hasPlayableDeck ? 'You need at least one playable deck to battle' : undefined}>
-            <button style={hasPlayableDeck ? styles.playBtn : { ...styles.playBtn, opacity: 0.4, cursor: 'not-allowed' }} disabled>
+          <div className="app-play-wrapper" title={!hasPlayableDeck ? 'You need at least one playable deck to battle' : undefined}>
+            <button className={`btn btn--primary-green btn--full-width btn--disabled`} disabled>
               Pratique
             </button>
           </div>
-          <button style={styles.deckBtn} onClick={handleListDecks}>My Decks</button>
-          <button style={styles.disabledBtn} disabled>Store</button>
-          <button style={styles.deckBtn} onClick={() => setView('performance')}>Performance</button>
-          <button style={styles.deckBtn} onClick={() => setView('config')}>Config</button>
-          <button style={styles.logoutBtn} onClick={handleLogout}>Logout</button>
+          <button className="btn btn--primary-blue btn--full-width" onClick={handleListDecks}>My Decks</button>
+          <button className="btn btn--ghost btn--full-width btn--disabled" disabled>Store</button>
+          <button className="btn btn--primary-blue btn--full-width" onClick={() => setView('performance')}>Performance</button>
+          <button className="btn btn--primary-blue btn--full-width" onClick={() => setView('config')}>Config</button>
+          <button className="btn btn--danger btn--full-width" onClick={handleLogout}>Logout</button>
         </div>
       </div>
     );
   }
 
   return (
-    <div style={styles.center}>
+    <div className="page-center">
       <AuthForm />
     </div>
   );
 }
-
-const styles: Record<string, React.CSSProperties> = {
-  page: {
-    minHeight: '100vh',
-    background: '#181825',
-    padding: '2rem',
-  },
-  center: {
-    minHeight: '100vh',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    background: '#181825',
-  },
-  card: {
-    background: '#1e1e2e',
-    border: '1px solid #313244',
-    borderRadius: 12,
-    padding: '2rem',
-    width: 320,
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '1rem',
-    alignItems: 'center',
-  },
-  welcome: { margin: 0, color: '#a6e3a1', fontSize: '1.3rem' },
-  sub: { margin: 0, color: '#a6adc8', fontSize: '0.85rem', textAlign: 'center' },
-  code: {
-    background: '#313244',
-    padding: '2px 6px',
-    borderRadius: 4,
-    color: '#89dceb',
-    fontSize: '0.8rem',
-  },
-  playWrapper: { width: '100%' },
-  playBtn: {
-    padding: '0.5rem 1.5rem',
-    borderRadius: 6,
-    border: 'none',
-    background: '#a6e3a1',
-    color: '#1e1e2e',
-    fontWeight: 700,
-    fontSize: '1rem',
-    cursor: 'pointer',
-    width: '100%',
-  },
-  deckBtn: {
-    padding: '0.5rem 1.5rem',
-    borderRadius: 6,
-    border: 'none',
-    background: '#89b4fa',
-    color: '#1e1e2e',
-    fontWeight: 600,
-    fontSize: '1rem',
-    cursor: 'pointer',
-    width: '100%',
-  },
-  disabledBtn: {
-    padding: '0.5rem 1.5rem',
-    borderRadius: 6,
-    border: 'none',
-    background: '#313244',
-    color: '#585b70',
-    fontWeight: 600,
-    fontSize: '1rem',
-    cursor: 'not-allowed',
-    width: '100%',
-    opacity: 0.6,
-  },
-  logoutBtn: {
-    padding: '0.5rem 1.5rem',
-    borderRadius: 6,
-    border: 'none',
-    background: '#f38ba8',
-    color: '#1e1e2e',
-    fontWeight: 600,
-    fontSize: '1rem',
-    cursor: 'pointer',
-    width: '100%',
-  },
-};

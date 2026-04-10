@@ -112,11 +112,10 @@ const COUNTRIES: { code: string; name: string }[] = [
 interface Props {
   value: string;
   onChange: (code: string) => void;
-  inputStyle?: React.CSSProperties;
   required?: boolean;
 }
 
-export function CountrySelect({ value, onChange, inputStyle, required }: Props) {
+export function CountrySelect({ value, onChange, required }: Props) {
   const selectedName = COUNTRIES.find(c => c.code === value)?.name ?? value;
   const [query, setQuery] = useState(selectedName);
   const [open, setOpen] = useState(false);
@@ -151,9 +150,9 @@ export function CountrySelect({ value, onChange, inputStyle, required }: Props) 
   }
 
   return (
-    <div ref={containerRef} style={{ position: 'relative' }}>
+    <div ref={containerRef} className="country-wrapper">
       <input
-        style={inputStyle}
+        className="form-input"
         placeholder="Search country…"
         value={query}
         required={required}
@@ -161,14 +160,14 @@ export function CountrySelect({ value, onChange, inputStyle, required }: Props) 
         onFocus={() => setOpen(true)}
       />
       {open && filtered.length > 0 && (
-        <div style={styles.dropdown}>
+        <div className="country-dropdown">
           {filtered.map(c => (
             <div
               key={c.code}
-              style={{ ...styles.option, ...(c.code === value ? styles.optionActive : {}) }}
+              className={`country-option${c.code === value ? ' country-option--active' : ''}`}
               onMouseDown={() => handleSelect(c.code, c.name)}
             >
-              <span style={styles.code}>{c.code}</span>
+              <span className="country-option__code">{c.code}</span>
               <span>{c.name}</span>
             </div>
           ))}
@@ -177,37 +176,3 @@ export function CountrySelect({ value, onChange, inputStyle, required }: Props) 
     </div>
   );
 }
-
-const styles: Record<string, React.CSSProperties> = {
-  dropdown: {
-    position: 'absolute',
-    top: '100%',
-    left: 0,
-    right: 0,
-    background: '#313244',
-    border: '1px solid #45475a',
-    borderRadius: 6,
-    maxHeight: 200,
-    overflowY: 'auto',
-    zIndex: 100,
-    marginTop: 2,
-  },
-  option: {
-    padding: '0.5rem 0.75rem',
-    cursor: 'pointer',
-    display: 'flex',
-    gap: '0.6rem',
-    alignItems: 'center',
-    color: '#cdd6f4',
-    fontSize: '0.9rem',
-  },
-  optionActive: {
-    background: '#45475a',
-  },
-  code: {
-    color: '#89b4fa',
-    fontWeight: 700,
-    fontSize: '0.8rem',
-    minWidth: 28,
-  },
-};

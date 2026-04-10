@@ -32,30 +32,29 @@ export function ConfigScreen({ onBack }: Props) {
   }
 
   return (
-    <div style={styles.page}>
-      <div style={styles.card}>
-        <div style={styles.header}>
-          <button style={styles.backBtn} onClick={onBack}>← Back</button>
-          <h2 style={styles.title}>Config</h2>
+    <div className="page-center">
+      <div className="surface-card surface-card--narrow">
+        <div className="config-header">
+          <button className="btn--link-blue" onClick={onBack}>← Back</button>
+          <h2 className="section-title">Config</h2>
         </div>
-        <form onSubmit={handleSubmit} style={styles.form}>
-          <label style={styles.label}>Nickname</label>
+        <form onSubmit={handleSubmit} className="form-stack">
+          <label className="form-label">Nickname</label>
           <input
-            style={styles.input}
+            className="form-input"
             placeholder="Your nickname (max 20)"
             value={nickname}
             onChange={(e) => { setNickname(e.target.value); setSaved(false); }}
             maxLength={20}
           />
-          <label style={styles.label}>Country</label>
+          <label className="form-label">Country</label>
           <CountrySelect
             value={country}
             onChange={(code) => { setCountry(code); setSaved(false); }}
-            inputStyle={styles.input}
           />
-          {error && <p style={styles.error}>{error}</p>}
-          {saved && <p style={styles.success}>Saved!</p>}
-          <button style={styles.button} type="submit" disabled={loading}>
+          {error && <p className="text-error">{error}</p>}
+          {saved && <p className="text-success">Saved!</p>}
+          <button className="btn btn--primary-blue" type="submit" disabled={loading} style={{ marginTop: '0.5rem' }}>
             {loading ? '...' : 'Save'}
           </button>
         </form>
@@ -63,51 +62,3 @@ export function ConfigScreen({ onBack }: Props) {
     </div>
   );
 }
-
-const styles: Record<string, React.CSSProperties> = {
-  page: { display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', background: '#181825' },
-  card: {
-    background: '#1e1e2e',
-    border: '1px solid #313244',
-    borderRadius: 12,
-    padding: '2rem',
-    width: 320,
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '1rem',
-  },
-  header: { display: 'flex', alignItems: 'center', gap: '1rem' },
-  backBtn: {
-    background: 'none',
-    border: 'none',
-    color: '#89b4fa',
-    cursor: 'pointer',
-    fontSize: '0.9rem',
-    padding: 0,
-  },
-  title: { margin: 0, color: '#cdd6f4', fontSize: '1.2rem' },
-  form: { display: 'flex', flexDirection: 'column', gap: '0.5rem' },
-  label: { color: '#a6adc8', fontSize: '0.85rem' },
-  input: {
-    padding: '0.6rem 0.8rem',
-    borderRadius: 6,
-    border: '1px solid #45475a',
-    background: '#313244',
-    color: '#cdd6f4',
-    fontSize: '0.95rem',
-    outline: 'none',
-  },
-  error: { margin: 0, color: '#f38ba8', fontSize: '0.85rem' },
-  success: { margin: 0, color: '#a6e3a1', fontSize: '0.85rem' },
-  button: {
-    padding: '0.6rem',
-    borderRadius: 6,
-    border: 'none',
-    background: '#89b4fa',
-    color: '#1e1e2e',
-    fontWeight: 600,
-    fontSize: '1rem',
-    cursor: 'pointer',
-    marginTop: '0.5rem',
-  },
-};
