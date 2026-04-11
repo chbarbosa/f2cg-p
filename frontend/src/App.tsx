@@ -11,10 +11,15 @@ import { PerformanceScreen } from './components/PerformanceScreen';
 import { useAuthStore } from './store/authStore';
 import { useDeckStore } from './store/deckStore';
 import { useQueueStore } from './store/queueStore';
+import { BoardPreview } from './components/board/BoardPreview';
 
 type View = 'home' | 'deckList' | 'deckBuilder' | 'profileSetup' | 'deckSelector' | 'queueWaiting' | 'config' | 'performance' | 'game';
 
 export default function App() {
+  if (import.meta.env.DEV && new URLSearchParams(window.location.search).has('devBoard')) {
+    return <BoardPreview />;
+  }
+
   const { username, playerId, nickname, logout } = useAuthStore();
   const { decks, fetchDecks } = useDeckStore();
   const { join, clearEntry } = useQueueStore();

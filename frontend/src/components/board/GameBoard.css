@@ -1,0 +1,249 @@
+/* ===== BOARD LAYOUT ===== */
+.game-board {
+  display: grid;
+  grid-template-rows: 40px 1fr 1fr 60px 1fr 1fr;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+/* ===== OPPONENT INFO BAR ===== */
+.board__opponent-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--space-lg);
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.board__info-username {
+  font-weight: 700;
+  font-size: var(--text-sm);
+  color: var(--color-text);
+}
+
+
+/* ===== HAND ZONES ===== */
+.board__opponent-hand,
+.board__player-hand-area {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: var(--space-sm) var(--space-lg);
+  background: #13131f;
+}
+
+/* Invisible spacer mirrors the piles side so the center stays truly centered */
+.board__hand-zone__spacer {
+  flex: 0 0 212px;
+}
+
+.board__hand-zone__center {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.board__hand-zone__piles {
+  flex: 0 0 212px;
+  display: flex;
+  gap: var(--space-md);
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.board__hand-label {
+  font-size: var(--text-xs);
+  color: var(--color-text-faint);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.board__hand-row {
+  display: flex;
+  gap: var(--space-sm);
+  flex-wrap: nowrap;
+  justify-content: center;
+  align-items: flex-end;
+}
+
+/* ===== FIELD ZONES ===== */
+.board__opponent-field,
+.board__player-field {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-md);
+  padding: var(--space-sm) var(--space-lg);
+  background: #1a1a28;
+  border-top: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.board__field-empty {
+  color: var(--color-text-faint);
+  font-size: var(--text-xs);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* ===== CENTER STRIP ===== */
+.board__center-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding: 0 var(--space-xl);
+  background: var(--color-border);
+  border-top: 1px solid var(--color-border-alt);
+  border-bottom: 1px solid var(--color-border-alt);
+  gap: var(--space-lg);
+}
+
+.board__center-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+}
+
+.board__center-label {
+  font-size: 9px;
+  color: var(--color-text-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.board__center-value {
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.board__phase-badge {
+  padding: 2px 10px;
+  border-radius: var(--radius-pill);
+  font-size: var(--text-xs);
+  font-weight: 700;
+}
+
+.board__phase-badge--SUMMONING    { background: #2a1a3a; color: var(--color-accent-purple); border: 1px solid var(--color-accent-purple); }
+.board__phase-badge--ACTION       { background: #3a1a1a; color: var(--color-accent-red);    border: 1px solid var(--color-accent-red); }
+.board__phase-badge--DRAW         { background: #1a2a3a; color: var(--color-accent-blue);   border: 1px solid var(--color-accent-blue); }
+.board__phase-badge--CHECK_VICTORY{ background: #1a3a1a; color: var(--color-accent-green);  border: 1px solid var(--color-accent-green); }
+
+.board__active-indicator {
+  font-size: var(--text-xs);
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  background: rgba(249, 226, 175, 0.12);
+  border: 1px solid var(--color-accent-yellow);
+  color: var(--color-accent-yellow);
+}
+
+.board__active-indicator--opponent {
+  background: rgba(163, 190, 140, 0.08);
+  border-color: var(--color-text-faint);
+  color: var(--color-text-faint);
+}
+
+/* ===== PLAYER HAND + INFO BAR ===== */
+.board__player-hand-area {
+  border-top: 1px solid var(--color-border);
+}
+
+.board__player-username {
+  font-weight: 700;
+  font-size: var(--text-sm);
+  color: var(--color-accent-green);
+}
+
+/* ===== CARD PILE WIDGET ===== */
+.card-pile {
+  position: relative;
+  /* container fits the stack: card size + 2 offsets of 4px each */
+  width: 98px;
+  height: 134px;
+  flex-shrink: 0;
+}
+
+.card-pile__stack {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.card-pile__layer {
+  position: absolute;
+  width: 90px;
+  height: 126px;
+  border-radius: var(--radius-md);
+  border: 0.5px solid;
+}
+
+.card-pile__layer--3 {
+  top: 8px;
+  left: 8px;
+  opacity: 0.25;
+}
+
+.card-pile__layer--2 {
+  top: 4px;
+  left: 4px;
+  opacity: 0.5;
+}
+
+.card-pile__layer--1 {
+  top: 0;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+/* Deck variant — gold */
+.card-pile--deck .card-pile__layer {
+  border-color: var(--color-accent-yellow);
+  background: rgba(249, 226, 175, 0.05);
+}
+
+.card-pile--deck .card-pile__count {
+  color: var(--color-accent-yellow);
+}
+
+.card-pile--deck .card-pile__label {
+  color: rgba(249, 226, 175, 0.5);
+}
+
+/* Graveyard variant — muted red */
+.card-pile--graveyard .card-pile__layer {
+  border-color: var(--color-accent-red);
+  background: rgba(243, 139, 168, 0.05);
+}
+
+.card-pile--graveyard .card-pile__count {
+  color: var(--color-accent-red);
+}
+
+.card-pile--graveyard .card-pile__label {
+  color: rgba(243, 139, 168, 0.5);
+}
+
+.card-pile__count {
+  font-size: var(--text-xl);
+  font-weight: 700;
+  line-height: 1;
+}
+
+.card-pile__label {
+  font-size: 8px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
