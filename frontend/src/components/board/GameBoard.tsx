@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import { Card } from './Card';
-import type { FieldUnit, GameBoardProps } from '../../api/gameTypes';
+import { CardDetailModal } from './CardDetailModal';
+import type { Card as CardType, FieldUnit, GameBoardProps } from '../../api/gameTypes';
 import './GameBoard.css';
 
 function CardPile({ count, variant }: { count: number; variant: 'deck' | 'graveyard' }) {
@@ -57,6 +59,37 @@ export function GameBoard({
   onCardClick,
 }: GameBoardProps) {
   const isPlayerActive = activePlayerId === currentPlayerId;
+  const [modalCard, setModalCard] = useState<CardType | null>(null);
+  const [modalFieldUnit, setModalFieldUnit] = useState<FieldUnit | undefined>(undefined);
+
+  function handleCardClick(cardId: string) {
+    onCardClick(cardId);
+
+    const handCard = player.hand.find(c => c.id === cardId);
+    if (handCard) {
+      setModalCard(handCard);
+      setModalFieldUnit(undefined);
+      return;
+    }
+
+    const playerUnit = player.field.find(u => u.card.id === cardId);
+    if (playerUnit) {
+      setModalCard(playerUnit.card);
+      setModalFieldUnit(playerUnit);
+      return;
+    }
+
+    const oppUnit = opponent.field.find(u => u.card.id === cardId);
+    if (oppUnit) {
+      setModalCard(oppUnit.card);
+      setModalFieldUnit(oppUnit);
+    }
+  }
+
+  function closeModal() {
+    setModalCard(null);
+    setModalFieldUnit(undefined);
+  }
 
   return (
     <div className="game-board">
@@ -102,7 +135,7 @@ export function GameBoard({
               key={unit.card.id}
               unit={unit}
               selected={selectedCardId === unit.card.id}
-              onClick={() => onCardClick(unit.card.id)}
+              onClick={() => handleCardClick(unit.card.id)}
             />
           ))
         )}
@@ -149,7 +182,7 @@ export function GameBoard({
               key={unit.card.id}
               unit={unit}
               selected={selectedCardId === unit.card.id}
-              onClick={() => onCardClick(unit.card.id)}
+              onClick={() => handleCardClick(unit.card.id)}
             />
           ))
         )}
@@ -173,7 +206,7 @@ export function GameBoard({
                 faceDown={false}
                 selected={selectedCardId === card.id}
                 playable={card.manaCost <= currentMana}
-                onClick={() => onCardClick(card.id)}
+                onClick={() => handleCardClick(card.id)}
               />
             ))}
           </div>
@@ -184,6 +217,12 @@ export function GameBoard({
           <CardPile count={player.graveyard.length} variant="graveyard" />
         </div>
       </div>
+
+      <CardDetailModal
+        card={modalCard}
+        fieldUnit={modalFieldUnit}
+        onClose={closeModal}
+      />
     </div>
   );
 }

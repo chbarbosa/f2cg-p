@@ -1,5 +1,20 @@
 export type UnitClass = 'WARRIOR' | 'MAGE' | 'PALADIN' | 'CLERIC' | 'ASSASSIN' | 'WARLOCK' | 'ARCHER';
 export type GamePhase = 'SUMMONING' | 'ACTION' | 'DRAW' | 'CHECK_VICTORY';
+export type AbilityType = 'PASSIVE' | 'ACTIVE';
+export type EffectType = 'ATK_BOOST' | 'DEF_BOOST' | 'ATK_REDUCTION' | 'DEF_REDUCTION';
+
+export interface Effect {
+  type: EffectType;
+  value: number;
+}
+
+export interface Ability {
+  id: string;
+  name: string;
+  type: AbilityType;
+  effect: Effect;
+  description: string;
+}
 
 export interface UnitCard {
   id: string;
@@ -9,6 +24,7 @@ export interface UnitCard {
   manaCost: number;
   attack: number;
   defense: number;
+  abilities: Ability[];
 }
 
 export interface BuffCard {
@@ -16,6 +32,7 @@ export interface BuffCard {
   name: string;
   type: 'BUFF';
   manaCost: number;
+  effect: Effect;
 }
 
 export interface DebuffCard {
@@ -23,6 +40,7 @@ export interface DebuffCard {
   name: string;
   type: 'DEBUFF';
   manaCost: number;
+  effect: Effect;
 }
 
 export type Card = UnitCard | BuffCard | DebuffCard;
@@ -31,8 +49,8 @@ export interface FieldUnit {
   card: UnitCard;
   currentAttack: number;
   currentDefense: number;
-  activeBuff: { name: string } | null;
-  activeDebuff: { name: string } | null;
+  activeBuff: { name: string; effect: Effect } | null;
+  activeDebuff: { name: string; effect: Effect } | null;
   hasActed: boolean;
 }
 
