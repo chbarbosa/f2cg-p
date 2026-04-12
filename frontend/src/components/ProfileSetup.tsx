@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { updateProfile } from '../api/player';
 import { useAuthStore } from '../store/authStore';
 import { CountrySelect } from './CountrySelect';
+import { PrimaryButton } from './ui';
 
 interface Props {
   onDone: () => void;
@@ -52,9 +53,9 @@ export function ProfileSetup({ onDone }: Props) {
           required
         />
         {error && <p className="text-error">{error}</p>}
-        <button className="btn btn--primary-green" type="submit" disabled={loading}>
+        <PrimaryButton type="submit" disabled={loading} fullWidth>
           {loading ? '...' : 'Save and Play'}
-        </button>
+        </PrimaryButton>
       </form>
     </div>
   );

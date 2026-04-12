@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useDeckStore } from '../store/deckStore';
+import { PrimaryButton, SecondaryButton, DangerButton } from './ui';
 
 interface Props {
   onBack: () => void;
@@ -24,17 +25,15 @@ export function DeckList({ onBack, onNew, onEdit }: Props) {
     <div className="deck-list">
       <div className="deck-list-header">
         <div className="deck-list-title-row">
-          <button className="btn btn--ghost btn--sm" onClick={onBack}>← Back</button>
+          <SecondaryButton onClick={onBack}>← Back</SecondaryButton>
           <h2 className="section-title">My Decks</h2>
         </div>
-        <button
-          className={`btn btn--primary-blue${decks.length >= 7 ? ' btn--disabled' : ''}`}
+        <PrimaryButton
           disabled={decks.length >= 7}
-          title={decks.length >= 7 ? 'Deck limit reached (7/7)' : undefined}
           onClick={() => { initNewDeck(); onNew(); }}
         >
           + New Deck
-        </button>
+        </PrimaryButton>
       </div>
 
       {loadingDecks && <p className="text-muted">Loading…</p>}
@@ -78,8 +77,8 @@ export function DeckList({ onBack, onNew, onEdit }: Props) {
               "{decks.find(d => d.id === confirmDeleteId)?.name}" will be permanently deleted.
             </p>
             <div className="modal-actions">
-              <button className="btn btn--ghost btn--sm" onClick={() => setConfirmDeleteId(null)}>Cancel</button>
-              <button className="btn btn--danger btn--sm" onClick={() => handleDelete(confirmDeleteId)}>Delete</button>
+              <SecondaryButton onClick={() => setConfirmDeleteId(null)}>Cancel</SecondaryButton>
+              <DangerButton onClick={() => handleDelete(confirmDeleteId)}>Delete</DangerButton>
             </div>
           </div>
         </div>

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useDeckStore } from '../store/deckStore';
 import type { DeckResponse } from '../api/types';
+import { PrimaryButton, SecondaryButton } from './ui';
 
 interface Props {
   onReady: (deckId: string) => void;
@@ -20,7 +21,7 @@ export function DeckSelector({ onReady, onBack }: Props) {
   return (
     <div className="deck-selector">
       <div className="deck-selector-header">
-        <button className="btn btn--ghost btn--sm" onClick={onBack}>← Back</button>
+        <SecondaryButton onClick={onBack}>← Back</SecondaryButton>
         <h2 className="section-title">Choose Your Deck</h2>
       </div>
 
@@ -46,13 +47,12 @@ export function DeckSelector({ onReady, onBack }: Props) {
         ))}
       </div>
 
-      <button
-        className={`selector-ready-btn${selectedId ? '' : ' btn--disabled'}`}
+      <PrimaryButton
         disabled={!selectedId}
         onClick={() => selectedId && onReady(selectedId)}
       >
         Ready
-      </button>
+      </PrimaryButton>
     </div>
   );
 }

@@ -12,6 +12,7 @@ import { useAuthStore } from './store/authStore';
 import { useDeckStore } from './store/deckStore';
 import { useQueueStore } from './store/queueStore';
 import { BoardPreview } from './components/board/BoardPreview';
+import { NavItem } from './components/ui';
 
 type View = 'home' | 'deckList' | 'deckBuilder' | 'profileSetup' | 'deckSelector' | 'queueWaiting' | 'config' | 'performance' | 'game';
 
@@ -124,24 +125,23 @@ export default function App() {
           <h2 className="app-welcome">Welcome, {username}!</h2>
           <p className="app-sub">Player ID: <code className="app-code-chip">{playerId}</code></p>
           <div className="app-play-wrapper" title={isPlayBlocked ? 'You need at least one playable deck to battle' : undefined}>
-            <button
-              className={`btn btn--primary-green btn--full-width${isPlayBlocked ? ' btn--disabled' : ''}`}
+            <NavItem
+              variant="secondary"
+              fullWidth
               disabled={isPlayBlocked}
               onClick={() => setView(nickname ? 'deckSelector' : 'profileSetup')}
             >
               Play
-            </button>
+            </NavItem>
           </div>
           <div className="app-play-wrapper" title={!hasPlayableDeck ? 'You need at least one playable deck to battle' : undefined}>
-            <button className={`btn btn--primary-green btn--full-width btn--disabled`} disabled>
-              Pratique
-            </button>
+            <NavItem variant="secondary" fullWidth disabled>Pratique</NavItem>
           </div>
-          <button className="btn btn--primary-blue btn--full-width" onClick={handleListDecks}>My Decks</button>
-          <button className="btn btn--ghost btn--full-width btn--disabled" disabled>Store</button>
-          <button className="btn btn--primary-blue btn--full-width" onClick={() => setView('performance')}>Performance</button>
-          <button className="btn btn--primary-blue btn--full-width" onClick={() => setView('config')}>Config</button>
-          <button className="btn btn--danger btn--full-width" onClick={handleLogout}>Logout</button>
+          <NavItem variant="secondary" fullWidth onClick={handleListDecks}>My Decks</NavItem>
+          <NavItem variant="tertiary" fullWidth disabled>Store</NavItem>
+          <NavItem variant="secondary" fullWidth onClick={() => setView('performance')}>Performance</NavItem>
+          <NavItem variant="secondary" fullWidth onClick={() => setView('config')}>Config</NavItem>
+          <NavItem variant="secondary" fullWidth onClick={handleLogout}>Logout</NavItem>
         </div>
       </div>
     );

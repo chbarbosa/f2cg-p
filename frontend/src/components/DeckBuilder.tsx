@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useDeckStore } from '../store/deckStore';
 import type { DeckTheme } from '../api/types';
+import { PrimaryButton, SecondaryButton, TertiaryButton, DangerButton } from './ui';
 
 interface Props {
   onCancel: () => void;
@@ -53,14 +54,10 @@ export function DeckBuilder({ onCancel, onSaved }: Props) {
           onChange={e => setDeckName(e.target.value)}
         />
         <span className="deck-counter">{cardCount}/20</span>
-        <button
-          className={`btn btn--primary-green${canSave ? '' : ' btn--disabled'}`}
-          onClick={handleSave}
-          disabled={!canSave}
-        >
+        <PrimaryButton onClick={handleSave} disabled={!canSave}>
           {saving ? 'Saving…' : cardCount === 20 ? 'Save (Playable)' : 'Save (Draft)'}
-        </button>
-        <button className="btn btn--ghost" onClick={handleCancel}>Cancel</button>
+        </PrimaryButton>
+        <SecondaryButton onClick={handleCancel}>Cancel</SecondaryButton>
       </div>
 
       {saveError && <p className="text-error">{saveError}</p>}
@@ -69,19 +66,19 @@ export function DeckBuilder({ onCancel, onSaved }: Props) {
       <div className="theme-row">
         <span className="form-label">Theme:</span>
         {THEMES.map(t => (
-          <button
+          <TertiaryButton
             key={t}
-            className={`theme-btn${selectedTheme === t ? ' theme-btn--active' : ''}${themeIsLocked && selectedTheme !== t ? ' btn--disabled' : ''}`}
+            active={selectedTheme === t}
             onClick={() => selectTheme(t)}
             disabled={themeIsLocked && selectedTheme !== t}
           >
             {t}
-          </button>
+          </TertiaryButton>
         ))}
         {selectedCardIds.length > 0 && (
-          <button className="btn btn--danger btn--sm ml-auto" onClick={() => setShowResetModal(true)}>
+          <DangerButton onClick={() => setShowResetModal(true)} className="ml-auto">
             Reset
-          </button>
+          </DangerButton>
         )}
       </div>
 
@@ -120,8 +117,8 @@ export function DeckBuilder({ onCancel, onSaved }: Props) {
           <div className="modal-box modal-box--wide">
             <p className="modal-title">Reset will clear all card selections. Continue?</p>
             <div className="modal-actions">
-              <button className="btn btn--danger btn--sm" onClick={handleResetConfirm}>Confirm</button>
-              <button className="btn btn--ghost btn--sm" onClick={() => setShowResetModal(false)}>Cancel</button>
+              <DangerButton onClick={handleResetConfirm}>Confirm</DangerButton>
+              <SecondaryButton onClick={() => setShowResetModal(false)}>Cancel</SecondaryButton>
             </div>
           </div>
         </div>
@@ -133,8 +130,8 @@ export function DeckBuilder({ onCancel, onSaved }: Props) {
           <div className="modal-box modal-box--wide">
             <p className="modal-title">You have unsaved changes. Discard and go back?</p>
             <div className="modal-actions">
-              <button className="btn btn--danger btn--sm" onClick={onCancel}>Discard</button>
-              <button className="btn btn--ghost btn--sm" onClick={() => setShowCancelModal(false)}>Keep editing</button>
+              <DangerButton onClick={onCancel}>Discard</DangerButton>
+              <SecondaryButton onClick={() => setShowCancelModal(false)}>Keep editing</SecondaryButton>
             </div>
           </div>
         </div>

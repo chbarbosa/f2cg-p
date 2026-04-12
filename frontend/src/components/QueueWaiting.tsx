@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useQueueStore } from '../store/queueStore';
 import { useAuthStore } from '../store/authStore';
 import { useQueueSSE } from '../hooks/useQueueSSE';
+import { DangerButton, SecondaryButton } from './ui';
 
 interface Props {
   onCancelled: () => void;
@@ -53,14 +54,14 @@ export function QueueWaiting({ onCancelled, onMatchFound }: Props) {
         <div className="spinner" aria-label="spinner" />
         <h2 className="section-title">Looking for opponent…</h2>
         <p className="text-muted">You're in the queue. Hang tight!</p>
-        <button
-          className="btn btn--danger"
-          onClick={() => setShowConfirm(true)}
-          disabled={loading}
-          style={{ marginTop: '0.5rem' }}
-        >
-          Cancel
-        </button>
+        <div style={{ marginTop: '0.5rem' }}>
+          <DangerButton
+            onClick={() => setShowConfirm(true)}
+            disabled={loading}
+          >
+            Cancel
+          </DangerButton>
+        </div>
       </div>
 
       {showConfirm && (
@@ -69,8 +70,8 @@ export function QueueWaiting({ onCancelled, onMatchFound }: Props) {
             <p className="modal-title">Leave the queue?</p>
             <p className="modal-sub">You'll lose your place and have to rejoin.</p>
             <div className="modal-actions">
-              <button className="btn btn--ghost btn--sm" onClick={() => setShowConfirm(false)}>Stay</button>
-              <button className="btn btn--danger btn--sm" onClick={handleConfirmCancel}>Leave</button>
+              <SecondaryButton onClick={() => setShowConfirm(false)}>Stay</SecondaryButton>
+              <DangerButton onClick={handleConfirmCancel}>Leave</DangerButton>
             </div>
           </div>
         </div>
@@ -82,7 +83,7 @@ export function QueueWaiting({ onCancelled, onMatchFound }: Props) {
             <p className="modal-title">No opponent found</p>
             <p className="modal-sub">We could not find an opponent. Please try again.</p>
             <div className="modal-actions">
-              <button className="btn btn--danger btn--sm" onClick={handleBackToHome}>Back to Home</button>
+              <DangerButton onClick={handleBackToHome}>Back to Home</DangerButton>
             </div>
           </div>
         </div>

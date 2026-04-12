@@ -1,0 +1,19 @@
+/* ===== DESIGN SYSTEM TOKENS ===== */
+:root {
+  --color-bg:                   #0d0d0d;
+  --color-surface:              #141200;
+  --color-gold:                 #c9a84c;
+  --color-gold-bright:          #e8c96d;
+  --color-gold-muted:           #8a6e20;
+  --color-gold-dim:             #3a3820;
+  --color-text-primary:         #ffffff;
+  --color-text-muted:           #666650;
+  --color-text-dark:            #0d0d0d;
+  --color-text-dim:             #4a4830;
+  --color-danger-bg:            #3a0000;
+  --color-danger-text:          #cc8888;
+  --color-danger-border:        #aa4444;
+  --color-danger-hover-bg:      #550000;
+  --color-danger-hover-text:    #ffaaaa;
+  --color-danger-hover-border:  #ff4444;
+}

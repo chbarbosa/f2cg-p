@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { getGame, sendHeartbeat, forfeitGame } from '../api/game';
 import { useAuthStore } from '../store/authStore';
 import type { GameResponse } from '../api/types';
+import { PrimaryButton, SecondaryButton, DangerButton } from './ui';
 
 interface Props {
   gamePublicId: string;
@@ -85,7 +86,9 @@ export function GameScreen({ gamePublicId, onGameOver }: Props) {
           {outcome === 'lost' && <h2 className="game-title game-title--lost">You lost.</h2>}
           {outcome === 'cancelled' && <h2 className="game-title game-title--cancelled">Game cancelled.</h2>}
           <p className="game-vs">{game.player1Username} vs {game.player2Username}</p>
-          <button className="btn btn--primary-blue" style={{ marginTop: '0.5rem' }} onClick={onGameOver}>Back to Home</button>
+          <div style={{ marginTop: '0.5rem' }}>
+            <PrimaryButton onClick={onGameOver}>Back to Home</PrimaryButton>
+          </div>
         </div>
       </div>
     );
@@ -99,14 +102,14 @@ export function GameScreen({ gamePublicId, onGameOver }: Props) {
           {game.player1Username} vs {game.player2Username}
         </p>
         <p className="text-muted">Game is under construction. Stay tuned!</p>
-        <button
-          className="btn btn--danger"
-          style={{ marginTop: '0.5rem' }}
-          onClick={() => setShowForfeitConfirm(true)}
-          disabled={forfeiting}
-        >
-          Forfeit
-        </button>
+        <div style={{ marginTop: '0.5rem' }}>
+          <DangerButton
+            onClick={() => setShowForfeitConfirm(true)}
+            disabled={forfeiting}
+          >
+            Forfeit
+          </DangerButton>
+        </div>
       </div>
 
       {showForfeitConfirm && (
@@ -115,10 +118,10 @@ export function GameScreen({ gamePublicId, onGameOver }: Props) {
             <p className="modal-title">Forfeit the match?</p>
             <p className="modal-sub">Your opponent will be declared the winner.</p>
             <div className="modal-actions">
-              <button className="btn btn--ghost btn--sm" onClick={() => setShowForfeitConfirm(false)}>Stay</button>
-              <button className="btn btn--danger btn--sm" onClick={handleForfeitConfirm} disabled={forfeiting}>
+              <SecondaryButton onClick={() => setShowForfeitConfirm(false)}>Stay</SecondaryButton>
+              <DangerButton onClick={handleForfeitConfirm} disabled={forfeiting}>
                 {forfeiting ? '...' : 'Forfeit'}
-              </button>
+              </DangerButton>
             </div>
           </div>
         </div>

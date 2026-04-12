@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { updateProfile } from '../api/player';
 import { useAuthStore } from '../store/authStore';
 import { CountrySelect } from './CountrySelect';
+import { PrimaryButton, TertiaryButton } from './ui';
 
 interface Props {
   onBack: () => void;
@@ -35,7 +36,7 @@ export function ConfigScreen({ onBack }: Props) {
     <div className="page-center">
       <div className="surface-card surface-card--narrow">
         <div className="config-header">
-          <button className="btn--link-blue" onClick={onBack}>← Back</button>
+          <TertiaryButton type="button" onClick={onBack}>← Back</TertiaryButton>
           <h2 className="section-title">Config</h2>
         </div>
         <form onSubmit={handleSubmit} className="form-stack">
@@ -54,9 +55,11 @@ export function ConfigScreen({ onBack }: Props) {
           />
           {error && <p className="text-error">{error}</p>}
           {saved && <p className="text-success">Saved!</p>}
-          <button className="btn btn--primary-blue" type="submit" disabled={loading} style={{ marginTop: '0.5rem' }}>
-            {loading ? '...' : 'Save'}
-          </button>
+          <div style={{ marginTop: '0.5rem' }}>
+            <PrimaryButton type="submit" disabled={loading} fullWidth>
+              {loading ? '...' : 'Save'}
+            </PrimaryButton>
+          </div>
         </form>
       </div>
     </div>

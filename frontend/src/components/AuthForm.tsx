@@ -3,6 +3,7 @@ import { ApiError } from '../api/errors';
 import { login, register, verifyAccount } from '../api/auth';
 import { useAuthStore } from '../store/authStore';
 import { ErrorMessage } from './ErrorMessage';
+import { PrimaryButton, SecondaryButton, TertiaryButton } from './ui';
 
 function toFriendlyError(err: unknown, context: 'login' | 'register' | 'verify'): string {
   if (err instanceof ApiError) {
@@ -83,16 +84,15 @@ export function AuthForm() {
             autoFocus
           />
           {error && <ErrorMessage message={error} />}
-          <button className="btn btn--primary-blue" type="submit" disabled={loading}>
+          <PrimaryButton type="submit" disabled={loading} fullWidth>
             {loading ? '...' : 'Verify'}
-          </button>
-          <button
-            className="btn--link"
+          </PrimaryButton>
+          <TertiaryButton
             type="button"
             onClick={() => { setStep('auth'); setError(''); setCode(''); }}
           >
             Back
-          </button>
+          </TertiaryButton>
         </form>
       </div>
     );
@@ -103,18 +103,18 @@ export function AuthForm() {
       <h1 className="auth-title">F2CG</h1>
       {sessionExpired && <ErrorMessage message="Your session has expired. Please log in again." />}
       <div className="auth-tabs">
-        <button
-          className={`auth-tab${tab === 'login' ? ' auth-tab--active' : ''}`}
+        <SecondaryButton
+          active={tab === 'login'}
           onClick={() => { setTab('login'); setError(''); }}
         >
           Login
-        </button>
-        <button
-          className={`auth-tab${tab === 'register' ? ' auth-tab--active' : ''}`}
+        </SecondaryButton>
+        <SecondaryButton
+          active={tab === 'register'}
           onClick={() => { setTab('register'); setError(''); }}
         >
           Register
-        </button>
+        </SecondaryButton>
       </div>
       <form onSubmit={handleAuthSubmit} className="form-stack">
         <input
@@ -135,9 +135,9 @@ export function AuthForm() {
           required
         />
         {error && <ErrorMessage message={error} />}
-        <button className="btn btn--primary-blue" type="submit" disabled={loading}>
+        <PrimaryButton type="submit" disabled={loading} fullWidth>
           {loading ? '...' : tab === 'login' ? 'Login' : 'Register'}
-        </button>
+        </PrimaryButton>
       </form>
     </div>
   );

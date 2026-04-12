@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { getCurrentPerformance, getParticipatedSeasons, getSeasonPerformance } from '../api/performance';
 import type { PerformanceResponse, PlayerRank, SeasonSummary } from '../api/types';
+import { SecondaryButton, TertiaryButton } from './ui';
 
 interface Props {
   onBack: () => void;
@@ -152,7 +153,7 @@ export function PerformanceScreen({ onBack }: Props) {
   return (
     <div className="perf-page">
       <div className="perf-header">
-        <button className="btn btn--ghost btn--sm" onClick={onBack}>← Back</button>
+        <SecondaryButton onClick={onBack}>← Back</SecondaryButton>
         <h2 className="section-title">Performance</h2>
       </div>
 
@@ -177,14 +178,13 @@ export function PerformanceScreen({ onBack }: Props) {
           {years.length > 0 && (
             <div className="year-row" data-testid="year-selector">
               {years.map(year => (
-                <button
+                <TertiaryButton
                   key={year}
-                  data-testid={`year-btn-${year}`}
+                  active={selectedYear === year}
                   onClick={() => handleYearSelect(year)}
-                  className={`year-btn${selectedYear === year ? ' year-btn--active' : ''}`}
                 >
                   {year}
-                </button>
+                </TertiaryButton>
               ))}
             </div>
           )}
@@ -197,15 +197,15 @@ export function PerformanceScreen({ onBack }: Props) {
                   ? !selectedSeasonId
                   : selectedSeasonId === s.id;
                 return (
-                  <button
+                  <TertiaryButton
                     key={s.id}
-                    data-testid={`season-btn-${s.id}`}
+                    active={isSelected}
                     onClick={() => handleSeasonSelect(s.id)}
-                    className={`season-btn${isSelected ? ' season-btn--active' : ''}${isCurrent ? ' season-btn--current' : ''}`}
+                    className={isCurrent ? 'season-btn--current' : undefined}
                   >
                     {s.name ?? `S${s.seasonNumber}`}
                     {isCurrent && <span className="season-current-dot" />}
-                  </button>
+                  </TertiaryButton>
                 );
               })}
             </div>
