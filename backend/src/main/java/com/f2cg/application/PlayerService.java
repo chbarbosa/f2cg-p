@@ -3,6 +3,10 @@ package com.f2cg.application;
 import com.f2cg.api.dto.AuthResponse;
 import com.f2cg.api.dto.RegisterResponse;
 import com.f2cg.domain.player.Player;
+import com.f2cg.eventbus.AppEventType;
+import com.f2cg.eventbus.AppEvent;
+import com.f2cg.eventbus.EventBus;
+import com.f2cg.eventbus.EventBuilder;
 import com.f2cg.infrastructure.JwtUtil;
 import com.f2cg.infrastructure.r2dbc.PlayerRepository;
 import org.springframework.http.HttpStatus;
@@ -12,6 +16,9 @@ import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
 import java.util.regex.Pattern;
@@ -28,16 +35,19 @@ public class PlayerService {
     private final EmailService emailService;
     private final SeasonService seasonService;
     private final RankCalculationService rankCalculationService;
+    private final EventBus eventBus;
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
     private final Random random = new Random();
 
     public PlayerService(PlayerRepository playerRepository, JwtUtil jwtUtil, EmailService emailService,
-                         SeasonService seasonService, RankCalculationService rankCalculationService) {
+                         SeasonService seasonService, RankCalculationService rankCalculationService,
+                         EventBus eventBus) {
         this.playerRepository = playerRepository;
         this.jwtUtil = jwtUtil;
         this.emailService = emailService;
         this.seasonService = seasonService;
         this.rankCalculationService = rankCalculationService;
+        this.eventBus = eventBus;
     }
 
     public Mono<RegisterResponse> register(String email, String password) {
@@ -80,14 +90,18 @@ public class PlayerService {
     }
 
     public Mono<AuthResponse> login(String email, String password) {
-        return playerRepository.findByUsername(email)
-                .switchIfEmpty(Mono.error(
-                        new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials")))
+        Mono<AuthResponse> core = playerRepository.findByUsername(email)
+                .switchIfEmpty(Mono.defer(() -> {
+                    eventBus.publish(loginFailureEvent(email));
+                    return Mono.error(new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials"));
+                }))
                 .flatMap(player -> {
                     if (!passwordEncoder.matches(password, player.getPasswordHash())) {
+                        eventBus.publish(loginFailureEvent(email));
                         return Mono.error(new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials"));
                     }
                     if (!player.isActive()) {
+                        eventBus.publish(loginFailureEvent(email));
                         return Mono.error(new ResponseStatusException(HttpStatus.FORBIDDEN, "Account not activated"));
                     }
                     AuthResponse response = new AuthResponse(
@@ -100,7 +114,9 @@ public class PlayerService {
                                             ? Mono.empty()
                                             : Mono.error(e))
                             .then(Mono.just(response));
-                });
+                })
+                .doOnSuccess(r -> eventBus.publish(loginSuccessEvent(r, email)));
+        return eventBus.timed(AppEventType.LOGIN_TIMED, null, null, "AUTH", core);
     }
 
     public Mono<Void> updateProfile(String playerId, String nickname, String country) {
@@ -127,8 +143,41 @@ public class PlayerService {
                 .flatMap(player -> {
                     player.setNickname(nickname != null && !nickname.isBlank() ? nickname.trim() : null);
                     player.setCountry(country != null && !country.isBlank() ? country.trim() : null);
-                    return playerRepository.save(player);
+                    return playerRepository.save(player)
+                            .doOnSuccess(saved -> eventBus.publish(
+                                    EventBuilder.create(AppEventType.USER_UPDATED)
+                                            .actor(playerId).target(playerId, "USER").success()
+                                            .payload(Map.of(
+                                                    "playerId", playerId,
+                                                    "updatedFields", buildUpdatedFields(nickname, country),
+                                                    "finalState", Map.of(
+                                                            "nickname", saved.getNickname() != null ? saved.getNickname() : "",
+                                                            "country", saved.getCountry() != null ? saved.getCountry() : ""
+                                                    )
+                                            )).build()
+                            ));
                 })
                 .then();
+    }
+
+    private AppEvent loginFailureEvent(String email) {
+        return EventBuilder.create(AppEventType.LOGIN_FAILURE)
+                .actor(null).target(null, "AUTH").failure("Invalid credentials")
+                .payload(Map.of("username", email))
+                .build();
+    }
+
+    private AppEvent loginSuccessEvent(AuthResponse response, String email) {
+        return EventBuilder.create(AppEventType.LOGIN_SUCCESS)
+                .actor(response.playerId()).target(response.playerId(), "AUTH").success()
+                .payload(Map.of("username", email, "playerId", response.playerId()))
+                .build();
+    }
+
+    private List<String> buildUpdatedFields(String nickname, String country) {
+        List<String> fields = new ArrayList<>();
+        if (nickname != null && !nickname.isBlank()) fields.add("nickname");
+        if (country != null && !country.isBlank()) fields.add("country");
+        return fields;
     }
 }

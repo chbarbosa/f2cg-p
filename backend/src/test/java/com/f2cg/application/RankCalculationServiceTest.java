@@ -4,6 +4,8 @@ import com.f2cg.domain.season.PlayerRank;
 import com.f2cg.domain.season.Season;
 import com.f2cg.domain.season.SeasonPhase;
 import com.f2cg.domain.season.SeasonStatus;
+import com.f2cg.eventbus.AppEventType;
+import com.f2cg.eventbus.EventBus;
 import com.f2cg.infrastructure.r2dbc.PlayerSeasonStatsEntity;
 import com.f2cg.infrastructure.r2dbc.PlayerSeasonStatsRepository;
 import com.f2cg.infrastructure.r2dbc.SeasonEntity;
@@ -27,6 +29,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -38,13 +41,17 @@ class RankCalculationServiceTest {
     private SeasonRepository seasonRepository;
     @Mock
     private SeasonService seasonService;
+    @Mock
+    private EventBus eventBus;
 
     private RankCalculationService rankCalculationService;
 
     @BeforeEach
     void setUp() {
         rankCalculationService = new RankCalculationService(
-                playerSeasonStatsRepository, seasonRepository, seasonService);
+                playerSeasonStatsRepository, seasonRepository, seasonService, eventBus);
+        lenient().when(eventBus.timed(any(), any(), any(), any(), any()))
+                .thenAnswer(inv -> inv.getArgument(4));
     }
 
     // --- isWeeklyCalculationDue ---
@@ -418,6 +425,23 @@ class RankCalculationServiceTest {
 
         verify(seasonRepository).save(argThat(e ->
                 LocalDate.now().equals(e.getLastWeeklyCalculation())));
+    }
+
+    // --- event publishing ---
+
+    @Test
+    void calculateRanks_publishesRankCalculationTimedEvent() {
+        Season season = freeSeason();
+
+        when(playerSeasonStatsRepository.findBySeasonId("s-1")).thenReturn(Flux.empty());
+        when(playerSeasonStatsRepository.saveAll(any(Iterable.class))).thenReturn(Flux.empty());
+        when(seasonRepository.findById("s-1")).thenReturn(Mono.just(seasonEntity("s-1")));
+        when(seasonRepository.save(any())).thenAnswer(inv -> Mono.just(inv.getArgument(0)));
+
+        StepVerifier.create(rankCalculationService.calculateRanks(season))
+                .verifyComplete();
+
+        verify(eventBus).timed(eq(AppEventType.RANK_CALCULATION_TIMED), any(), any(), any(), any());
     }
 
     // --- getMatchmakingRank ---

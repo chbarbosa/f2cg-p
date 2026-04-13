@@ -1,20 +1,27 @@
 package com.f2cg.application;
 
 import com.f2cg.domain.game.GameStatus;
+import com.f2cg.eventbus.AppEvent;
+import com.f2cg.eventbus.AppEventType;
+import com.f2cg.eventbus.EventBus;
 import com.f2cg.infrastructure.r2dbc.GameEntity;
 import com.f2cg.infrastructure.r2dbc.GameRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -24,6 +31,9 @@ class GameServiceTest {
     @Mock
     GameRepository gameRepository;
 
+    @Mock
+    EventBus eventBus;
+
     GameService gameService;
 
     static final String PUBLIC_ID = "game-pub-id";
@@ -32,7 +42,7 @@ class GameServiceTest {
 
     @BeforeEach
     void setUp() {
-        gameService = new GameService(gameRepository);
+        gameService = new GameService(gameRepository, eventBus);
     }
 
     private GameEntity buildGame(String status, LocalDateTime p1Hb, LocalDateTime p2Hb, LocalDateTime createdAt) {
@@ -131,5 +141,72 @@ class GameServiceTest {
 
         StepVerifier.create(gameService.forfeit(PUBLIC_ID, P1_ID))
                 .verifyComplete();
+    }
+
+    // --- event publishing ---
+
+    @Test
+    void forfeit_inProgress_publishesPlayerForfeited() {
+        GameEntity game = buildGame(GameStatus.IN_PROGRESS.name(), null, null, LocalDateTime.now().minusMinutes(2));
+        when(gameRepository.findByPublicId(PUBLIC_ID)).thenReturn(Mono.just(game));
+        when(gameRepository.finishGame(PUBLIC_ID, P2_ID, GameStatus.IN_PROGRESS.name())).thenReturn(Mono.just(1));
+
+        StepVerifier.create(gameService.forfeit(PUBLIC_ID, P1_ID)).verifyComplete();
+
+        ArgumentCaptor<AppEvent> captor = ArgumentCaptor.forClass(AppEvent.class);
+        verify(eventBus, atLeastOnce()).publish(captor.capture());
+        assertThat(captor.getAllValues()).anyMatch(e -> e.eventType() == AppEventType.PLAYER_FORFEITED
+                && e.actorId().equals(P1_ID));
+    }
+
+    @Test
+    void forfeit_inProgress_publishesGameFinishedWithForfeitReason() {
+        GameEntity game = buildGame(GameStatus.IN_PROGRESS.name(), null, null, LocalDateTime.now().minusMinutes(2));
+        when(gameRepository.findByPublicId(PUBLIC_ID)).thenReturn(Mono.just(game));
+        when(gameRepository.finishGame(PUBLIC_ID, P2_ID, GameStatus.IN_PROGRESS.name())).thenReturn(Mono.just(1));
+
+        StepVerifier.create(gameService.forfeit(PUBLIC_ID, P1_ID)).verifyComplete();
+
+        ArgumentCaptor<AppEvent> captor = ArgumentCaptor.forClass(AppEvent.class);
+        verify(eventBus, atLeastOnce()).publish(captor.capture());
+        assertThat(captor.getAllValues()).anyMatch(e ->
+                e.eventType() == AppEventType.GAME_FINISHED && e.payload().contains("FORFEIT"));
+    }
+
+    @Test
+    void heartbeat_opponentDead_inProgress_publishesPlayerDisconnected() {
+        LocalDateTime recent = LocalDateTime.now().minusSeconds(10);
+        LocalDateTime stale = LocalDateTime.now().minusSeconds(GameService.DISCONNECT_SECONDS + 10);
+        GameEntity game = buildGame(GameStatus.IN_PROGRESS.name(), recent, stale, LocalDateTime.now().minusMinutes(5));
+
+        when(gameRepository.findByPublicId(PUBLIC_ID))
+                .thenReturn(Mono.just(game)).thenReturn(Mono.just(game));
+        when(gameRepository.updatePlayer1Heartbeat(eq(PUBLIC_ID), eq(P1_ID), any())).thenReturn(Mono.just(1));
+        when(gameRepository.finishGame(PUBLIC_ID, P1_ID, GameStatus.IN_PROGRESS.name())).thenReturn(Mono.just(1));
+
+        StepVerifier.create(gameService.heartbeat(PUBLIC_ID, P1_ID)).verifyComplete();
+
+        ArgumentCaptor<AppEvent> captor = ArgumentCaptor.forClass(AppEvent.class);
+        verify(eventBus, atLeastOnce()).publish(captor.capture());
+        assertThat(captor.getAllValues()).anyMatch(e -> e.eventType() == AppEventType.PLAYER_DISCONNECTED);
+    }
+
+    @Test
+    void heartbeat_opponentDead_inProgress_publishesGameFinishedWithDisconnectReason() {
+        LocalDateTime recent = LocalDateTime.now().minusSeconds(10);
+        LocalDateTime stale = LocalDateTime.now().minusSeconds(GameService.DISCONNECT_SECONDS + 10);
+        GameEntity game = buildGame(GameStatus.IN_PROGRESS.name(), recent, stale, LocalDateTime.now().minusMinutes(5));
+
+        when(gameRepository.findByPublicId(PUBLIC_ID))
+                .thenReturn(Mono.just(game)).thenReturn(Mono.just(game));
+        when(gameRepository.updatePlayer1Heartbeat(eq(PUBLIC_ID), eq(P1_ID), any())).thenReturn(Mono.just(1));
+        when(gameRepository.finishGame(PUBLIC_ID, P1_ID, GameStatus.IN_PROGRESS.name())).thenReturn(Mono.just(1));
+
+        StepVerifier.create(gameService.heartbeat(PUBLIC_ID, P1_ID)).verifyComplete();
+
+        ArgumentCaptor<AppEvent> captor = ArgumentCaptor.forClass(AppEvent.class);
+        verify(eventBus, atLeastOnce()).publish(captor.capture());
+        assertThat(captor.getAllValues()).anyMatch(e ->
+                e.eventType() == AppEventType.GAME_FINISHED && e.payload().contains("DISCONNECT"));
     }
 }

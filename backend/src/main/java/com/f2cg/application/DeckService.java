@@ -4,6 +4,9 @@ import com.f2cg.domain.card.Card;
 import com.f2cg.domain.deck.Deck;
 import com.f2cg.domain.deck.DeckStatus;
 import com.f2cg.domain.deck.DeckTheme;
+import com.f2cg.eventbus.AppEventType;
+import com.f2cg.eventbus.EventBus;
+import com.f2cg.eventbus.EventBuilder;
 import com.f2cg.infrastructure.r2dbc.CardEntityMapper;
 import com.f2cg.infrastructure.r2dbc.CardRepository;
 import com.f2cg.infrastructure.r2dbc.DeckEntity;
@@ -18,6 +21,7 @@ import reactor.core.publisher.Mono;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
@@ -29,12 +33,14 @@ public class DeckService {
     private final DeckRepository deckRepository;
     private final CardRepository cardRepository;
     private final CardEntityMapper cardEntityMapper;
+    private final EventBus eventBus;
 
     public DeckService(DeckRepository deckRepository, CardRepository cardRepository,
-                       CardEntityMapper cardEntityMapper) {
+                       CardEntityMapper cardEntityMapper, EventBus eventBus) {
         this.deckRepository = deckRepository;
         this.cardRepository = cardRepository;
         this.cardEntityMapper = cardEntityMapper;
+        this.eventBus = eventBus;
     }
 
     @Cacheable("cardsByTheme")
@@ -117,7 +123,11 @@ public class DeckService {
                                 UUID.randomUUID().toString(), playerId, name,
                                 finalTheme.name(), CardIdConverter.toString(ids),
                                 status.name(), now, now);
-                        return deckRepository.save(entity).map(this::toDomain);
+                        return deckRepository.save(entity).map(this::toDomain)
+                                .doOnSuccess(deck -> eventBus.publish(
+                                        EventBuilder.create(AppEventType.DECK_CREATED)
+                                                .actor(playerId).target(deck.id(), "DECK").success()
+                                                .payload(deckPayload(deck)).build()));
                     });
                 });
     }
@@ -183,7 +193,12 @@ public class DeckService {
                     if (!entity.getPlayerId().equals(playerId)) {
                         return Mono.error(new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied"));
                     }
-                    return deckRepository.delete(entity);
+                    return deckRepository.delete(entity)
+                            .doOnSuccess(__ -> eventBus.publish(
+                                    EventBuilder.create(AppEventType.DECK_DELETED)
+                                            .actor(playerId).target(entity.getId(), "DECK").success()
+                                            .payload(Map.of("deckId", entity.getId(), "name", entity.getName()))
+                                            .build()));
                 });
     }
 
@@ -204,7 +219,21 @@ public class DeckService {
         entity.setCardIds(CardIdConverter.toString(ids));
         entity.setStatus(status.name());
         entity.setUpdatedAt(LocalDateTime.now());
-        return deckRepository.save(entity).map(this::toDomain);
+        return deckRepository.save(entity).map(this::toDomain)
+                .doOnSuccess(deck -> eventBus.publish(
+                        EventBuilder.create(AppEventType.DECK_UPDATED)
+                                .actor(deck.playerId()).target(deck.id(), "DECK").success()
+                                .payload(deckPayload(deck)).build()));
+    }
+
+    private Map<String, Object> deckPayload(Deck deck) {
+        return Map.of(
+                "deckId", deck.id(),
+                "name", deck.name(),
+                "theme", deck.theme().name(),
+                "status", deck.status().name(),
+                "cardIds", deck.cardIds()
+        );
     }
 
     private Deck toDomain(DeckEntity entity) {

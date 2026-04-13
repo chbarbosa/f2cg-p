@@ -3,6 +3,8 @@ package com.f2cg.application;
 import com.f2cg.domain.season.PlayerRank;
 import com.f2cg.domain.season.Season;
 import com.f2cg.domain.season.SeasonPhase;
+import com.f2cg.eventbus.AppEventType;
+import com.f2cg.eventbus.EventBus;
 import com.f2cg.infrastructure.r2dbc.PlayerSeasonStatsEntity;
 import com.f2cg.infrastructure.r2dbc.PlayerSeasonStatsRepository;
 import com.f2cg.infrastructure.r2dbc.SeasonRepository;
@@ -23,13 +25,16 @@ public class RankCalculationService {
     private final PlayerSeasonStatsRepository playerSeasonStatsRepository;
     private final SeasonRepository seasonRepository;
     private final SeasonService seasonService;
+    private final EventBus eventBus;
 
     public RankCalculationService(PlayerSeasonStatsRepository playerSeasonStatsRepository,
                                   SeasonRepository seasonRepository,
-                                  SeasonService seasonService) {
+                                  SeasonService seasonService,
+                                  EventBus eventBus) {
         this.playerSeasonStatsRepository = playerSeasonStatsRepository;
         this.seasonRepository = seasonRepository;
         this.seasonService = seasonService;
+        this.eventBus = eventBus;
     }
 
     public boolean isWeeklyCalculationDue(Season season) {
@@ -50,7 +55,7 @@ public class RankCalculationService {
     public Mono<Void> calculateRanks(Season season) {
         SeasonPhase phase = seasonService.getCurrentPhase(season, LocalDate.now());
 
-        return playerSeasonStatsRepository.findBySeasonId(season.id())
+        Mono<Void> core = playerSeasonStatsRepository.findBySeasonId(season.id())
                 .collectList()
                 .flatMap(statsList -> {
                     List<PlayerSeasonStatsEntity> updated = phase == SeasonPhase.FREE
@@ -62,6 +67,8 @@ public class RankCalculationService {
                     return playerSeasonStatsRepository.saveAll(updated)
                             .then(updateSeasonLastCalculation(season));
                 });
+
+        return eventBus.timed(AppEventType.RANK_CALCULATION_TIMED, null, season.id(), "RANK", core);
     }
 
     public PlayerRank getMatchmakingRank(PlayerRank rank, SeasonPhase phase) {

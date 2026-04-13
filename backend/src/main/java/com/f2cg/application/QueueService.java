@@ -5,6 +5,9 @@ import com.f2cg.domain.game.GameStatus;
 import com.f2cg.domain.queue.QueueEntry;
 import com.f2cg.domain.queue.QueueStatus;
 import com.f2cg.domain.season.PlayerRank;
+import com.f2cg.eventbus.AppEventType;
+import com.f2cg.eventbus.EventBus;
+import com.f2cg.eventbus.EventBuilder;
 import com.f2cg.infrastructure.r2dbc.DeckRepository;
 import com.f2cg.infrastructure.r2dbc.GameEntity;
 import com.f2cg.infrastructure.r2dbc.GameRepository;
@@ -38,6 +41,7 @@ public class QueueService {
     private final GameRepository gameRepository;
     private final PlayerRepository playerRepository;
     private final QueueSseBroadcaster sseBroadcaster;
+    private final EventBus eventBus;
 
     @Value("${game.queue.timeout-seconds}")
     private int timeoutSeconds;
@@ -49,7 +53,8 @@ public class QueueService {
                         PlayerSeasonStatsRepository playerSeasonStatsRepository,
                         GameRepository gameRepository,
                         PlayerRepository playerRepository,
-                        QueueSseBroadcaster sseBroadcaster) {
+                        QueueSseBroadcaster sseBroadcaster,
+                        EventBus eventBus) {
         this.queueEntryRepository = queueEntryRepository;
         this.deckRepository = deckRepository;
         this.seasonService = seasonService;
@@ -58,10 +63,11 @@ public class QueueService {
         this.gameRepository = gameRepository;
         this.playerRepository = playerRepository;
         this.sseBroadcaster = sseBroadcaster;
+        this.eventBus = eventBus;
     }
 
     public Mono<QueueEntry> joinQueue(String playerId, String deckId) {
-        return playerRepository.findById(playerId)
+        Mono<QueueEntry> core = playerRepository.findById(playerId)
                 .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Player not found")))
                 .flatMap(player -> {
                     if (player.getNickname() == null || player.getNickname().isBlank()) {
@@ -69,6 +75,7 @@ public class QueueService {
                     }
                     return joinQueueInternal(playerId, deckId);
                 });
+        return eventBus.timed(AppEventType.GAME_JOIN_TIMED, playerId, null, "QUEUE", core);
     }
 
     private Mono<QueueEntry> joinQueueInternal(String playerId, String deckId) {
@@ -142,25 +149,38 @@ public class QueueService {
                                             GameStatus.WAITING_START.name(),
                                             LocalDateTime.now()
                                     );
-                                    return gameRepository.save(game)
-                                            .flatMap(savedGame -> {
-                                                joiner.setStatus(QueueStatus.MATCHED.name());
-                                                return queueEntryRepository.save(joiner)
-                                                        .doOnSuccess(ignored -> {
-                                                            Map<String, String> matchFoundPayload1 = Map.of(
-                                                                    "gamePublicId", gamePublicId,
-                                                                    "opponentUsername", p2Username
-                                                            );
-                                                            Map<String, String> matchFoundPayload2 = Map.of(
-                                                                    "gamePublicId", gamePublicId,
-                                                                    "opponentUsername", p1Username
-                                                            );
-                                                            sseBroadcaster.emit(p1.getId(), "MATCH_FOUND", matchFoundPayload1);
-                                                            sseBroadcaster.emit(p2.getId(), "MATCH_FOUND", matchFoundPayload2);
-                                                            sseBroadcaster.complete(p1.getId());
-                                                            sseBroadcaster.complete(p2.getId());
-                                                        });
-                                            });
+                                    return eventBus.timed(
+                                            AppEventType.GAME_CREATION_TIMED,
+                                            p1.getId(), gamePublicId, "GAME",
+                                            gameRepository.save(game)
+                                                    .flatMap(savedGame -> {
+                                                        joiner.setStatus(QueueStatus.MATCHED.name());
+                                                        return queueEntryRepository.save(joiner)
+                                                                .doOnSuccess(ignored -> {
+                                                                    Map<String, String> matchFoundPayload1 = Map.of(
+                                                                            "gamePublicId", gamePublicId,
+                                                                            "opponentUsername", p2Username
+                                                                    );
+                                                                    Map<String, String> matchFoundPayload2 = Map.of(
+                                                                            "gamePublicId", gamePublicId,
+                                                                            "opponentUsername", p1Username
+                                                                    );
+                                                                    sseBroadcaster.emit(p1.getId(), "MATCH_FOUND", matchFoundPayload1);
+                                                                    sseBroadcaster.emit(p2.getId(), "MATCH_FOUND", matchFoundPayload2);
+                                                                    sseBroadcaster.complete(p1.getId());
+                                                                    sseBroadcaster.complete(p2.getId());
+                                                                    eventBus.publish(EventBuilder.create(AppEventType.GAME_MATCH_STARTED)
+                                                                            .actor(p1.getId()).target(gamePublicId, "GAME").success()
+                                                                            .payload(Map.of(
+                                                                                    "gameId", gamePublicId,
+                                                                                    "player1Id", p1.getId(),
+                                                                                    "player2Id", p2.getId(),
+                                                                                    "player1DeckId", joiner.getDeckId(),
+                                                                                    "player2DeckId", opponent.getDeckId()
+                                                                            )).build());
+                                                                });
+                                                    })
+                                    );
                                 })))
                 .then();
     }

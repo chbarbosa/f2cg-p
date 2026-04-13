@@ -1,6 +1,9 @@
 package com.f2cg.application;
 
 import com.f2cg.domain.game.GameStatus;
+import com.f2cg.eventbus.AppEventType;
+import com.f2cg.eventbus.EventBus;
+import com.f2cg.eventbus.EventBuilder;
 import com.f2cg.infrastructure.r2dbc.GameEntity;
 import com.f2cg.infrastructure.r2dbc.GameRepository;
 import org.springframework.http.HttpStatus;
@@ -9,6 +12,7 @@ import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
+import java.util.Map;
 
 @Service
 public class GameService {
@@ -16,9 +20,11 @@ public class GameService {
     static final long DISCONNECT_SECONDS = 90;
 
     private final GameRepository gameRepository;
+    private final EventBus eventBus;
 
-    public GameService(GameRepository gameRepository) {
+    public GameService(GameRepository gameRepository, EventBus eventBus) {
         this.gameRepository = gameRepository;
+        this.eventBus = eventBus;
     }
 
     public Mono<Void> heartbeat(String publicId, String playerId) {
@@ -63,7 +69,22 @@ public class GameService {
 
         if (GameStatus.IN_PROGRESS.name().equals(game.getStatus()) && !opponentAlive) {
             String myId = iAmPlayer1 ? game.getPlayer1Id() : game.getPlayer2Id();
-            return gameRepository.finishGame(game.getPublicId(), myId, GameStatus.IN_PROGRESS.name()).then();
+            String opponentId = iAmPlayer1 ? game.getPlayer2Id() : game.getPlayer1Id();
+            eventBus.publish(EventBuilder.create(AppEventType.PLAYER_DISCONNECTED)
+                    .actor(myId).target(game.getPublicId(), "GAME").success()
+                    .payload(Map.of("gameId", game.getPublicId(), "playerId", opponentId))
+                    .build());
+            return gameRepository.finishGame(game.getPublicId(), myId, GameStatus.IN_PROGRESS.name())
+                    .doOnSuccess(__ -> eventBus.publish(EventBuilder.create(AppEventType.GAME_FINISHED)
+                            .actor(myId).target(game.getPublicId(), "GAME").success()
+                            .payload(Map.of(
+                                    "gameId", game.getPublicId(),
+                                    "winnerId", myId,
+                                    "loserId", opponentId,
+                                    "totalTurns", 0,
+                                    "reason", "DISCONNECT"
+                            )).build()))
+                    .then();
         }
 
         return Mono.empty();
@@ -85,7 +106,21 @@ public class GameService {
                         return gameRepository.cancelGame(publicId, GameStatus.WAITING_START.name()).then();
                     }
                     String opponentId = isPlayer1 ? game.getPlayer2Id() : game.getPlayer1Id();
-                    return gameRepository.finishGame(publicId, opponentId, GameStatus.IN_PROGRESS.name()).then();
+                    eventBus.publish(EventBuilder.create(AppEventType.PLAYER_FORFEITED)
+                            .actor(playerId).target(publicId, "GAME").success()
+                            .payload(Map.of("gameId", publicId, "playerId", playerId))
+                            .build());
+                    return gameRepository.finishGame(publicId, opponentId, GameStatus.IN_PROGRESS.name())
+                            .doOnSuccess(__ -> eventBus.publish(EventBuilder.create(AppEventType.GAME_FINISHED)
+                                    .actor(opponentId).target(publicId, "GAME").success()
+                                    .payload(Map.of(
+                                            "gameId", publicId,
+                                            "winnerId", opponentId,
+                                            "loserId", playerId,
+                                            "totalTurns", 0,
+                                            "reason", "FORFEIT"
+                                    )).build()))
+                            .then();
                 });
     }
 

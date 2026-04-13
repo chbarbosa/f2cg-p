@@ -4,6 +4,9 @@ import com.f2cg.domain.card.UnitCard;
 import com.f2cg.domain.card.UnitClass;
 import com.f2cg.domain.deck.DeckStatus;
 import com.f2cg.domain.deck.DeckTheme;
+import com.f2cg.eventbus.AppEvent;
+import com.f2cg.eventbus.AppEventType;
+import com.f2cg.eventbus.EventBus;
 import com.f2cg.infrastructure.r2dbc.CardEntity;
 import com.f2cg.infrastructure.r2dbc.CardEntityMapper;
 import com.f2cg.infrastructure.r2dbc.CardRepository;
@@ -12,6 +15,7 @@ import com.f2cg.infrastructure.r2dbc.DeckRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
@@ -26,6 +30,8 @@ import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -40,6 +46,9 @@ class DeckServiceTest {
     @Mock
     private CardEntityMapper cardEntityMapper;
 
+    @Mock
+    private EventBus eventBus;
+
     private DeckService deckService;
 
     private static final String PLAYER_ID = "player-1";
@@ -47,7 +56,7 @@ class DeckServiceTest {
 
     @BeforeEach
     void setUp() {
-        deckService = new DeckService(deckRepository, cardRepository, cardEntityMapper);
+        deckService = new DeckService(deckRepository, cardRepository, cardEntityMapper, eventBus);
     }
 
     // --- createDeck ---
@@ -177,6 +186,62 @@ class DeckServiceTest {
                         ex instanceof ResponseStatusException rse &&
                         rse.getStatusCode() == HttpStatus.FORBIDDEN)
                 .verify();
+    }
+
+    @Test
+    void createDeck_twentyCards_publishesDeckCreated() {
+        List<String> cardIds = IntStream.rangeClosed(1, 20)
+                .mapToObj(i -> "w-u-" + String.format("%02d", i))
+                .toList();
+        List<CardEntity> cardEntities = cardIds.stream()
+                .map(id -> cardEntity(id, "WARRIOR"))
+                .toList();
+
+        when(deckRepository.countByPlayerId(PLAYER_ID)).thenReturn(Mono.just(0L));
+        when(cardRepository.findAllById(cardIds)).thenReturn(Flux.fromIterable(cardEntities));
+        when(deckRepository.save(any(DeckEntity.class)))
+                .thenAnswer(inv -> Mono.just(inv.getArgument(0)));
+
+        StepVerifier.create(deckService.createDeck(PLAYER_ID, "Full Deck", "WARRIOR", cardIds))
+                .expectNextCount(1)
+                .verifyComplete();
+
+        ArgumentCaptor<AppEvent> captor = ArgumentCaptor.forClass(AppEvent.class);
+        verify(eventBus, atLeastOnce()).publish(captor.capture());
+        assertThat(captor.getAllValues()).anyMatch(e -> e.eventType() == AppEventType.DECK_CREATED);
+    }
+
+    @Test
+    void updateDeck_publishesDeckUpdated() {
+        DeckEntity existing = deckEntity(DECK_ID, PLAYER_ID, "WARRIOR", "");
+
+        when(deckRepository.findById(DECK_ID)).thenReturn(Mono.just(existing));
+        when(deckRepository.save(any(DeckEntity.class)))
+                .thenAnswer(inv -> Mono.just(inv.getArgument(0)));
+
+        StepVerifier.create(
+                deckService.updateDeck(DECK_ID, PLAYER_ID, "Updated Deck", "WARRIOR", List.of()))
+                .expectNextCount(1)
+                .verifyComplete();
+
+        ArgumentCaptor<AppEvent> captor = ArgumentCaptor.forClass(AppEvent.class);
+        verify(eventBus, atLeastOnce()).publish(captor.capture());
+        assertThat(captor.getAllValues()).anyMatch(e -> e.eventType() == AppEventType.DECK_UPDATED);
+    }
+
+    @Test
+    void deleteDeck_publishesDeckDeleted() {
+        DeckEntity existing = deckEntity(DECK_ID, PLAYER_ID, "WARRIOR", "");
+
+        when(deckRepository.findById(DECK_ID)).thenReturn(Mono.just(existing));
+        when(deckRepository.delete(existing)).thenReturn(Mono.empty());
+
+        StepVerifier.create(deckService.deleteDeck(DECK_ID, PLAYER_ID))
+                .verifyComplete();
+
+        ArgumentCaptor<AppEvent> captor = ArgumentCaptor.forClass(AppEvent.class);
+        verify(eventBus, atLeastOnce()).publish(captor.capture());
+        assertThat(captor.getAllValues()).anyMatch(e -> e.eventType() == AppEventType.DECK_DELETED);
     }
 
     // --- getCardsByTheme ---

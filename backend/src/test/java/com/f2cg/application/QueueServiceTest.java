@@ -6,6 +6,9 @@ import com.f2cg.domain.season.PlayerRank;
 import com.f2cg.domain.season.Season;
 import com.f2cg.domain.season.SeasonPhase;
 import com.f2cg.domain.season.SeasonStatus;
+import com.f2cg.eventbus.AppEvent;
+import com.f2cg.eventbus.AppEventType;
+import com.f2cg.eventbus.EventBus;
 import com.f2cg.infrastructure.r2dbc.DeckEntity;
 import com.f2cg.infrastructure.r2dbc.DeckRepository;
 import com.f2cg.infrastructure.r2dbc.GameEntity;
@@ -36,6 +39,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -52,6 +56,7 @@ class QueueServiceTest {
     @Mock private GameRepository gameRepository;
     @Mock private PlayerRepository playerRepository;
     @Mock private QueueSseBroadcaster sseBroadcaster;
+    @Mock private EventBus eventBus;
 
     private QueueService queueService;
 
@@ -65,8 +70,10 @@ class QueueServiceTest {
         queueService = new QueueService(
                 queueEntryRepository, deckRepository,
                 seasonService, rankCalculationService, playerSeasonStatsRepository,
-                gameRepository, playerRepository, sseBroadcaster);
+                gameRepository, playerRepository, sseBroadcaster, eventBus);
         ReflectionTestUtils.setField(queueService, "timeoutSeconds", 30);
+        lenient().when(eventBus.timed(any(), any(), any(), any(), any()))
+                .thenAnswer(inv -> inv.getArgument(4));
 
         // Lenient stubs for matchmaking methods — not used by all tests
         lenient().when(queueEntryRepository.findFirstEligibleOpponentNullRank(any()))
@@ -465,6 +472,65 @@ class QueueServiceTest {
                 .expectErrorMatches(ex -> ex instanceof ResponseStatusException rse
                         && rse.getStatusCode() == HttpStatus.NOT_FOUND)
                 .verify();
+    }
+
+    // --- event publishing ---
+
+    @Test
+    void joinQueue_publishesGameJoinTimedEvent() {
+        when(deckRepository.findById(DECK_ID)).thenReturn(Mono.just(playableDeck()));
+        when(seasonService.getCurrentSeason()).thenReturn(Mono.just(freeSeason()));
+        when(seasonService.getCurrentPhase(any(), any())).thenReturn(SeasonPhase.FREE);
+        when(playerSeasonStatsRepository.findByPlayerIdAndSeasonId(PLAYER_ID, SEASON_ID))
+                .thenReturn(Mono.empty());
+        when(rankCalculationService.getMatchmakingRank(PlayerRank.PENDING, SeasonPhase.FREE))
+                .thenReturn(null);
+        when(queueEntryRepository.findByPlayerIdAndStatus(PLAYER_ID, "WAITING"))
+                .thenReturn(Mono.empty());
+        when(queueEntryRepository.save(any(QueueEntryEntity.class)))
+                .thenAnswer(inv -> Mono.just(inv.getArgument(0)));
+
+        StepVerifier.create(queueService.joinQueue(PLAYER_ID, DECK_ID))
+                .expectNextCount(1)
+                .verifyComplete();
+
+        verify(eventBus).timed(eq(AppEventType.GAME_JOIN_TIMED), eq(PLAYER_ID), any(), any(), any());
+    }
+
+    @Test
+    void tryMatchmaking_matchFound_publishesGameCreationTimedAndMatchStarted() {
+        QueueEntryEntity opponent = new QueueEntryEntity(
+                "entry-opp", OPPONENT_ID, "deck-opp", "WAITING", null, LocalDateTime.now().minusSeconds(5));
+        Player p1 = player(PLAYER_ID, "Player One");
+        Player p2 = player(OPPONENT_ID, "Player Two");
+
+        when(deckRepository.findById(DECK_ID)).thenReturn(Mono.just(playableDeck()));
+        when(seasonService.getCurrentSeason()).thenReturn(Mono.just(freeSeason()));
+        when(seasonService.getCurrentPhase(any(), any())).thenReturn(SeasonPhase.FREE);
+        when(playerSeasonStatsRepository.findByPlayerIdAndSeasonId(PLAYER_ID, SEASON_ID))
+                .thenReturn(Mono.empty());
+        when(rankCalculationService.getMatchmakingRank(PlayerRank.PENDING, SeasonPhase.FREE))
+                .thenReturn(null);
+        when(queueEntryRepository.findByPlayerIdAndStatus(PLAYER_ID, "WAITING"))
+                .thenReturn(Mono.empty());
+        when(queueEntryRepository.save(any(QueueEntryEntity.class)))
+                .thenAnswer(inv -> Mono.just(inv.getArgument(0)));
+        when(queueEntryRepository.findFirstEligibleOpponentNullRank(PLAYER_ID))
+                .thenReturn(Mono.just(opponent));
+        when(queueEntryRepository.claimForMatch("entry-opp")).thenReturn(Mono.just(1));
+        when(playerRepository.findById(PLAYER_ID)).thenReturn(Mono.just(p1));
+        when(playerRepository.findById(OPPONENT_ID)).thenReturn(Mono.just(p2));
+        when(gameRepository.save(any(GameEntity.class)))
+                .thenAnswer(inv -> Mono.just(inv.getArgument(0)));
+
+        StepVerifier.create(queueService.joinQueue(PLAYER_ID, DECK_ID))
+                .assertNext(entry -> assertThat(entry.status()).isEqualTo(QueueStatus.MATCHED))
+                .verifyComplete();
+
+        verify(eventBus).timed(eq(AppEventType.GAME_CREATION_TIMED), any(), any(), eq("GAME"), any());
+        ArgumentCaptor<AppEvent> captor = ArgumentCaptor.forClass(AppEvent.class);
+        verify(eventBus, atLeastOnce()).publish(captor.capture());
+        assertThat(captor.getAllValues()).anyMatch(e -> e.eventType() == AppEventType.GAME_MATCH_STARTED);
     }
 
     // --- helpers ---
