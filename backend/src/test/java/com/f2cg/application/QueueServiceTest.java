@@ -73,6 +73,8 @@ class QueueServiceTest {
                 .thenReturn(Mono.empty());
         lenient().when(queueEntryRepository.findFirstEligibleOpponentWithRank(any(), any()))
                 .thenReturn(Mono.empty());
+        lenient().when(playerRepository.findById(PLAYER_ID))
+                .thenReturn(Mono.just(player(PLAYER_ID, "Player One")));
     }
 
     // --- joinQueue ---
@@ -282,6 +284,7 @@ class QueueServiceTest {
                 .thenAnswer(inv -> Mono.just(inv.getArgument(0)));
         when(queueEntryRepository.findFirstEligibleOpponentNullRank(PLAYER_ID))
                 .thenReturn(Mono.just(opponent));
+        when(queueEntryRepository.claimForMatch("entry-opp")).thenReturn(Mono.just(1));
         when(playerRepository.findById(PLAYER_ID)).thenReturn(Mono.just(p1));
         when(playerRepository.findById(OPPONENT_ID)).thenReturn(Mono.just(p2));
         when(gameRepository.save(any(GameEntity.class)))
@@ -368,6 +371,7 @@ class QueueServiceTest {
                 .thenAnswer(inv -> Mono.just(inv.getArgument(0)));
         when(queueEntryRepository.findFirstEligibleOpponentNullRank(PLAYER_ID))
                 .thenReturn(Mono.just(oldest));
+        when(queueEntryRepository.claimForMatch("entry-oldest")).thenReturn(Mono.just(1));
         when(playerRepository.findById(PLAYER_ID)).thenReturn(Mono.just(p1));
         when(playerRepository.findById(OPPONENT_ID)).thenReturn(Mono.just(p2));
         when(gameRepository.save(any(GameEntity.class)))
