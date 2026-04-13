@@ -1,0 +1,32 @@
+package com.f2cg.eventbus;
+
+public enum AppEventType {
+
+    // Observability — performance
+    LOGIN_TIMED,
+    GAME_CREATION_TIMED,
+    GAME_JOIN_TIMED,
+    RANK_CALCULATION_TIMED,
+
+    // Traceability — business events
+    LOGIN_SUCCESS,
+    LOGIN_FAILURE,
+    GAME_MATCH_STARTED,
+    SUMMONING_CONFIRMED,
+    SUMMONING_REVEALED,
+    CARD_PLAYED,
+    BUFF_APPLIED,
+    DEBUFF_APPLIED,
+    ATTACK_DECLARED,
+    COUNTER_ATTACK_RESOLVED,
+    CARD_DESTROYED,
+    ABILITY_USED,
+    CARD_DRAWN,
+    GAME_FINISHED,
+    PLAYER_DISCONNECTED,
+    PLAYER_FORFEITED,
+    DECK_CREATED,
+    DECK_UPDATED,
+    DECK_DELETED,
+    USER_UPDATED
+}
