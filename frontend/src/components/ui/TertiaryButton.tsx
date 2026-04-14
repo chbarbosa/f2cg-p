@@ -11,8 +11,6 @@ interface TertiaryButtonProps {
   className?: string;
 }
 
-const CLIP_PATH = 'polygon(10px 0%, 100% 0%, calc(100% - 10px) 100%, 0% 100%)';
-
 export function TertiaryButton({
   children,
   onClick,
@@ -38,7 +36,6 @@ export function TertiaryButton({
     boxShadow: isActive
       ? 'inset 0 0 0 1px var(--color-gold-muted)'
       : 'inset 0 0 0 1px var(--color-gold-dim)',
-    clipPath: CLIP_PATH,
     borderRadius: 0,
     border: 'none',
     cursor: disabled ? 'not-allowed' : 'pointer',

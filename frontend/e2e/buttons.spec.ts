@@ -44,11 +44,11 @@ test.describe('Design system: PrimaryButton', () => {
     await expect(loginBtn).not.toBeDisabled();
   });
 
-  test('applies parallelogram clip-path', async ({ page }) => {
+  test('renders without clip-path', async ({ page }) => {
     const loginBtn = page.getByRole('button', { name: 'Login' });
     await expect(loginBtn).toBeVisible();
     const clipPath = await loginBtn.evaluate(el => getComputedStyle(el).clipPath);
-    expect(clipPath).toBe(PARALLELOGRAM);
+    expect(clipPath).toBe('none');
   });
 });
 
@@ -67,11 +67,11 @@ test.describe('Design system: SecondaryButton', () => {
     await loginTab.click();
   });
 
-  test('applies parallelogram clip-path', async ({ page }) => {
+  test('renders without clip-path', async ({ page }) => {
     const tab = page.getByRole('button', { name: 'Login' });
     await expect(tab).toBeVisible();
     const clipPath = await tab.evaluate(el => getComputedStyle(el).clipPath);
-    expect(clipPath).toBe(PARALLELOGRAM);
+    expect(clipPath).toBe('none');
   });
 });
 
@@ -89,15 +89,15 @@ test.describe('Design system: TertiaryButton', () => {
     await page.getByPlaceholder('Password').fill('password123');
     await page.getByRole('button', { name: 'Register' }).click();
 
-    // Wait for verify step — Back button (TertiaryButton) should appear
-    const backBtn = page.getByRole('button', { name: 'Back' });
+    // Wait for verify step — BACK button (TertiaryButton) should appear
+    const backBtn = page.getByRole('button', { name: 'BACK' });
     await expect(backBtn).toBeVisible({ timeout: 5000 });
     await backBtn.click();
     // Should return to auth step — Login tab visible again
     await expect(page.getByRole('button', { name: 'Login' })).toBeVisible();
   });
 
-  test('applies parallelogram clip-path on Back button', async ({ page }) => {
+  test('renders without clip-path', async ({ page }) => {
     await page.route('**/api/auth/register', route =>
       route.fulfill({ status: 200, contentType: 'application/json', body: '{}' })
     );
@@ -107,10 +107,10 @@ test.describe('Design system: TertiaryButton', () => {
     await page.getByPlaceholder('Password').fill('password123');
     await page.getByRole('button', { name: 'Register' }).click();
 
-    const backBtn = page.getByRole('button', { name: 'Back' });
+    const backBtn = page.getByRole('button', { name: 'BACK' });
     await expect(backBtn).toBeVisible({ timeout: 5000 });
     const clipPath = await backBtn.evaluate(el => getComputedStyle(el).clipPath);
-    expect(clipPath).toBe(PARALLELOGRAM);
+    expect(clipPath).toBe('none');
   });
 });
 
@@ -153,7 +153,7 @@ test.describe('Design system: DangerButton', () => {
     const cancelBtn = page.getByRole('button', { name: 'Cancel' });
     await expect(cancelBtn).toBeVisible({ timeout: 5000 });
     const clipPath = await cancelBtn.evaluate(el => getComputedStyle(el).clipPath);
-    expect(clipPath).toBe(PARALLELOGRAM);
+    expect(clipPath).toBe('none');
   });
 });
 
@@ -209,5 +209,66 @@ test.describe('Design system: NavItem', () => {
     await expect(btn).toBeVisible();
     const radius = await btn.evaluate(el => getComputedStyle(el).borderRadius);
     expect(radius).toBe('0px');
+  });
+});
+
+test.describe('Back button pattern', () => {
+  test('Back button label is "BACK" with no arrow — Config screen', async ({ page }) => {
+    await page.route('**/api/player/me', route =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ nickname: 'Tester', country: 'BR' }),
+      })
+    );
+    await setAuthState(page);
+    await page.getByRole('button', { name: 'Config' }).click();
+    await expect(page.getByRole('heading', { name: 'Config' })).toBeVisible({ timeout: 5000 });
+    // Back button must say exactly "BACK" — no arrow prefix
+    const backBtn = page.getByRole('button', { name: 'BACK' });
+    await expect(backBtn).toBeVisible();
+    await expect(backBtn).toHaveText('BACK');
+  });
+
+  test('Back button is positioned below primary action — DeckSelector', async ({ page }) => {
+    await page.route('**/api/decks', route =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify([{
+          id: 'deck-1',
+          name: 'Test Deck',
+          theme: 'WARRIOR',
+          status: 'PLAYABLE',
+          cardIds: Array(20).fill('c'),
+        }]),
+      })
+    );
+    await setAuthState(page);
+    await page.getByRole('button', { name: 'Play' }).click();
+    await expect(page.getByRole('button', { name: 'Ready' })).toBeVisible({ timeout: 5000 });
+
+    // Verify DOM order: Ready appears before BACK in the document
+    const readyBox = await page.getByRole('button', { name: 'Ready' }).boundingBox();
+    const backBox = await page.getByRole('button', { name: 'BACK' }).boundingBox();
+    expect(readyBox).not.toBeNull();
+    expect(backBox).not.toBeNull();
+    expect(backBox!.y).toBeGreaterThan(readyBox!.y);
+  });
+
+  test('Back button uses TertiaryButton styling (transparent background)', async ({ page }) => {
+    await page.route('**/api/player/me', route =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ nickname: 'Tester', country: 'BR' }),
+      })
+    );
+    await setAuthState(page);
+    await page.getByRole('button', { name: 'Config' }).click();
+    await expect(page.getByRole('button', { name: 'BACK' })).toBeVisible({ timeout: 5000 });
+    const bg = await page.getByRole('button', { name: 'BACK' }).evaluate(el => getComputedStyle(el).backgroundColor);
+    // TertiaryButton has transparent background = rgba(0,0,0,0)
+    expect(bg).toBe('rgba(0, 0, 0, 0)');
   });
 });

@@ -35,10 +35,7 @@ export function ConfigScreen({ onBack }: Props) {
   return (
     <div className="page-center">
       <div className="surface-card surface-card--narrow">
-        <div className="config-header">
-          <TertiaryButton type="button" onClick={onBack}>← Back</TertiaryButton>
-          <h2 className="section-title">Config</h2>
-        </div>
+        <h2 className="section-title">Config</h2>
         <form onSubmit={handleSubmit} className="form-stack">
           <label className="form-label">Nickname</label>
           <input
@@ -59,6 +56,9 @@ export function ConfigScreen({ onBack }: Props) {
             <PrimaryButton type="submit" disabled={loading} fullWidth>
               {loading ? '...' : 'Save'}
             </PrimaryButton>
+          </div>
+          <div style={{ marginTop: '0.5rem' }}>
+            <TertiaryButton type="button" onClick={onBack} fullWidth>BACK</TertiaryButton>
           </div>
         </form>
       </div>

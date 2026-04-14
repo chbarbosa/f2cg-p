@@ -91,7 +91,7 @@ export function AuthForm() {
             type="button"
             onClick={() => { setStep('auth'); setError(''); setCode(''); }}
           >
-            Back
+            BACK
           </TertiaryButton>
         </form>
       </div>

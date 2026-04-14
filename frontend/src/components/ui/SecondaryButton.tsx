@@ -11,8 +11,6 @@ interface SecondaryButtonProps {
   className?: string;
 }
 
-const CLIP_PATH = 'polygon(10px 0%, 100% 0%, calc(100% - 10px) 100%, 0% 100%)';
-
 export function SecondaryButton({
   children,
   onClick,
@@ -38,7 +36,6 @@ export function SecondaryButton({
     boxShadow: isActive
       ? 'inset 0 0 0 1.5px var(--color-gold-bright)'
       : 'inset 0 0 0 1px var(--color-gold)',
-    clipPath: CLIP_PATH,
     borderRadius: 0,
     border: 'none',
     cursor: disabled ? 'not-allowed' : 'pointer',

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { getCurrentPerformance, getParticipatedSeasons, getSeasonPerformance } from '../api/performance';
 import type { PerformanceResponse, PlayerRank, SeasonSummary } from '../api/types';
-import { SecondaryButton, TertiaryButton } from './ui';
+import { TertiaryButton } from './ui';
 
 interface Props {
   onBack: () => void;
@@ -153,7 +153,6 @@ export function PerformanceScreen({ onBack }: Props) {
   return (
     <div className="perf-page">
       <div className="perf-header">
-        <SecondaryButton onClick={onBack}>← Back</SecondaryButton>
         <h2 className="section-title">Performance</h2>
       </div>
 
@@ -218,6 +217,7 @@ export function PerformanceScreen({ onBack }: Props) {
           )}
         </>
       )}
+      <TertiaryButton onClick={onBack}>BACK</TertiaryButton>
     </div>
   );
 }

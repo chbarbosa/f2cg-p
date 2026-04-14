@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useDeckStore } from '../store/deckStore';
-import { PrimaryButton, SecondaryButton, DangerButton } from './ui';
+import { PrimaryButton, SecondaryButton, DangerButton, TertiaryButton } from './ui';
 
 interface Props {
   onBack: () => void;
@@ -25,7 +25,6 @@ export function DeckList({ onBack, onNew, onEdit }: Props) {
     <div className="deck-list">
       <div className="deck-list-header">
         <div className="deck-list-title-row">
-          <SecondaryButton onClick={onBack}>← Back</SecondaryButton>
           <h2 className="section-title">My Decks</h2>
         </div>
         <PrimaryButton
@@ -42,6 +41,7 @@ export function DeckList({ onBack, onNew, onEdit }: Props) {
       {!loadingDecks && decks.length === 0 && (
         <p className="text-muted">No decks yet. Create your first one!</p>
       )}
+
 
       <div className="deck-rows">
         {decks.map(deck => (
@@ -67,6 +67,7 @@ export function DeckList({ onBack, onNew, onEdit }: Props) {
             </div>
           </div>
         ))}
+      <TertiaryButton onClick={onBack}>BACK</TertiaryButton>
       </div>
 
       {confirmDeleteId && (

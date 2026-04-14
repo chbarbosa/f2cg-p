@@ -11,8 +11,6 @@ interface PrimaryButtonProps {
   className?: string;
 }
 
-const CLIP_PATH = 'polygon(10px 0%, 100% 0%, calc(100% - 10px) 100%, 0% 100%)';
-
 export function PrimaryButton({
   children,
   onClick,
@@ -35,7 +33,6 @@ export function PrimaryButton({
     fontWeight: 500,
     padding: '14px 40px',
     letterSpacing: isActive ? '3px' : '1px',
-    clipPath: CLIP_PATH,
     borderRadius: 0,
     border: 'none',
     cursor: disabled ? 'not-allowed' : 'pointer',
