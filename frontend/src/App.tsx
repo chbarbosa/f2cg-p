@@ -12,7 +12,9 @@ import { useAuthStore } from './store/authStore';
 import { useDeckStore } from './store/deckStore';
 import { useQueueStore } from './store/queueStore';
 import { BoardPreview } from './components/board/BoardPreview';
-import { NavItem } from './components/ui';
+import { NavItem, Modal } from './components/ui';
+import { useModal } from './hooks/useModal';
+import { eventBus } from './events/eventBus';
 
 type View = 'home' | 'deckList' | 'deckBuilder' | 'profileSetup' | 'deckSelector' | 'queueWaiting' | 'config' | 'performance' | 'game';
 
@@ -26,6 +28,8 @@ export default function App() {
   const { join, clearEntry } = useQueueStore();
   const [view, setView] = useState<View>('home');
   const [gamePublicId, setGamePublicId] = useState<string | null>(null);
+  const { isOpen: logoutModalOpen, open: openLogoutModal, close: closeLogoutModal } = useModal();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   useEffect(() => {
     if (username && view === 'home') {
@@ -33,10 +37,14 @@ export default function App() {
     }
   }, [username, view, fetchDecks]);
 
-  const handleLogout = () => {
+  const handleConfirmLogout = () => {
+    setIsLoggingOut(true);
+    eventBus.publish('USER_LOGOUT', undefined);
     logout();
     clearEntry();
     setView('home');
+    setIsLoggingOut(false);
+    closeLogoutModal();
   };
 
   const handleEditDeck = () => setView('deckBuilder');
@@ -120,30 +128,42 @@ export default function App() {
     }
 
     return (
-      <div className="page-center">
-        <div className="surface-card surface-card--narrow">
-          <h2 className="app-welcome">Welcome, {username}!</h2>
-          <p className="app-sub">Player ID: <code className="app-code-chip">{playerId}</code></p>
-          <div className="app-play-wrapper" title={isPlayBlocked ? 'You need at least one playable deck to battle' : undefined}>
-            <NavItem
-              variant="secondary"
-              fullWidth
-              disabled={isPlayBlocked}
-              onClick={() => setView(nickname ? 'deckSelector' : 'profileSetup')}
-            >
-              Play
-            </NavItem>
+      <>
+        <div className="page-center">
+          <div className="surface-card surface-card--narrow">
+            <h2 className="app-welcome">Welcome, {username}!</h2>
+            <p className="app-sub">Player ID: <code className="app-code-chip">{playerId}</code></p>
+            <div className="app-play-wrapper" title={isPlayBlocked ? 'You need at least one playable deck to battle' : undefined}>
+              <NavItem
+                variant="secondary"
+                fullWidth
+                disabled={isPlayBlocked}
+                onClick={() => setView(nickname ? 'deckSelector' : 'profileSetup')}
+              >
+                Play
+              </NavItem>
+            </div>
+            <div className="app-play-wrapper" title={!hasPlayableDeck ? 'You need at least one playable deck to battle' : undefined}>
+              <NavItem variant="secondary" fullWidth disabled>Pratique</NavItem>
+            </div>
+            <NavItem variant="secondary" fullWidth onClick={handleListDecks}>My Decks</NavItem>
+            <NavItem variant="tertiary" fullWidth disabled>Store</NavItem>
+            <NavItem variant="secondary" fullWidth onClick={() => setView('performance')}>Performance</NavItem>
+            <NavItem variant="secondary" fullWidth onClick={() => setView('config')}>Config</NavItem>
+            <NavItem variant="secondary" fullWidth onClick={openLogoutModal}>Logout</NavItem>
           </div>
-          <div className="app-play-wrapper" title={!hasPlayableDeck ? 'You need at least one playable deck to battle' : undefined}>
-            <NavItem variant="secondary" fullWidth disabled>Pratique</NavItem>
-          </div>
-          <NavItem variant="secondary" fullWidth onClick={handleListDecks}>My Decks</NavItem>
-          <NavItem variant="tertiary" fullWidth disabled>Store</NavItem>
-          <NavItem variant="secondary" fullWidth onClick={() => setView('performance')}>Performance</NavItem>
-          <NavItem variant="secondary" fullWidth onClick={() => setView('config')}>Config</NavItem>
-          <NavItem variant="secondary" fullWidth onClick={handleLogout}>Logout</NavItem>
         </div>
-      </div>
+        <Modal
+          isOpen={logoutModalOpen}
+          title="LOGOUT"
+          message={"Are you sure you want to logout?\nAny ongoing match will count as a forfeit."}
+          confirmLabel="LOGOUT"
+          variant="danger"
+          onConfirm={handleConfirmLogout}
+          onCancel={closeLogoutModal}
+          isLoading={isLoggingOut}
+        />
+      </>
     );
   }
 

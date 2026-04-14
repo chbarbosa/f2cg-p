@@ -7,6 +7,11 @@ async function goToRegisterTab(page: Page) {
   await page.getByRole('button', { name: 'Register' }).first().click();
 }
 
+async function performLogout(page: Page) {
+  await page.getByRole('button', { name: 'Logout' }).click();
+  await page.locator('[data-testid="modal-confirm"] button').click();
+}
+
 test.describe('Auth flows', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
@@ -34,7 +39,7 @@ test.describe('Auth flows', () => {
     await expect(page.getByText(`Welcome, ${username}!`)).toBeVisible();
 
     // Logout and try registering the same username again
-    await page.getByRole('button', { name: 'Logout' }).click();
+    await performLogout(page);
     await goToRegisterTab(page);
     await page.getByPlaceholder('Username').fill(username);
     await page.getByPlaceholder('Password').fill('password123');
@@ -54,7 +59,7 @@ test.describe('Auth flows', () => {
     await expect(page.getByText(`Welcome, ${username}!`)).toBeVisible();
 
     // Logout and login
-    await page.getByRole('button', { name: 'Logout' }).click();
+    await performLogout(page);
     await page.getByPlaceholder('Username').fill(username);
     await page.getByPlaceholder('Password').fill('mypassword');
     await page.getByRole('button', { name: 'Login' }).last().click();
@@ -73,7 +78,7 @@ test.describe('Auth flows', () => {
     await expect(page.getByText(`Welcome, ${username}!`)).toBeVisible();
 
     // Logout and login with wrong password
-    await page.getByRole('button', { name: 'Logout' }).click();
+    await performLogout(page);
     await page.getByPlaceholder('Username').fill(username);
     await page.getByPlaceholder('Password').fill('wrong');
     await page.getByRole('button', { name: 'Login' }).last().click();
@@ -90,7 +95,7 @@ test.describe('Auth flows', () => {
     await page.getByRole('button', { name: 'Register' }).last().click();
     await expect(page.getByText(`Welcome, ${username}!`)).toBeVisible();
 
-    await page.getByRole('button', { name: 'Logout' }).click();
+    await performLogout(page);
 
     await expect(page.getByRole('heading', { name: 'F2CG' })).toBeVisible();
     await expect(page.getByPlaceholder('Username')).toBeVisible();
