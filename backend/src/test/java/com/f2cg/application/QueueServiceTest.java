@@ -57,6 +57,7 @@ class QueueServiceTest {
     @Mock private PlayerRepository playerRepository;
     @Mock private QueueSseBroadcaster sseBroadcaster;
     @Mock private EventBus eventBus;
+    @Mock private GameInitService gameInitService;
 
     private QueueService queueService;
 
@@ -70,12 +71,14 @@ class QueueServiceTest {
         queueService = new QueueService(
                 queueEntryRepository, deckRepository,
                 seasonService, rankCalculationService, playerSeasonStatsRepository,
-                gameRepository, playerRepository, sseBroadcaster, eventBus);
+                gameRepository, playerRepository, sseBroadcaster, eventBus, gameInitService);
         ReflectionTestUtils.setField(queueService, "timeoutSeconds", 30);
         lenient().when(eventBus.timed(any(), any(), any(), any(), any()))
                 .thenAnswer(inv -> inv.getArgument(4));
 
         // Lenient stubs for matchmaking methods — not used by all tests
+        lenient().when(gameInitService.initializeGame(any(), any(), any()))
+                .thenReturn(Mono.empty());
         lenient().when(queueEntryRepository.findFirstEligibleOpponentNullRank(any()))
                 .thenReturn(Mono.empty());
         lenient().when(queueEntryRepository.findFirstEligibleOpponentWithRank(any(), any()))

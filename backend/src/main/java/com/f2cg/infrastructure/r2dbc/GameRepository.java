@@ -32,4 +32,8 @@ public interface GameRepository extends ReactiveCrudRepository<GameEntity, Long>
     @Modifying
     @Query("UPDATE games SET player2_heartbeat = :ts WHERE public_id = :publicId AND player2_id = :playerId")
     Mono<Integer> updatePlayer2Heartbeat(String publicId, String playerId, LocalDateTime ts);
+
+    @Modifying
+    @Query("UPDATE games SET player1_hand = :p1Hand, player1_stack = :p1Stack, player2_hand = :p2Hand, player2_stack = :p2Stack WHERE public_id = :publicId")
+    Mono<Integer> updateGameState(String publicId, String p1Hand, String p1Stack, String p2Hand, String p2Stack);
 }

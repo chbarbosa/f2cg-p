@@ -67,7 +67,17 @@ CREATE TABLE IF NOT EXISTS games (
     winner_id           VARCHAR(36)  NULL,
     player1_heartbeat   TIMESTAMP    NULL,
     player2_heartbeat   TIMESTAMP    NULL,
-    created_at          TIMESTAMP    NOT NULL
+    created_at          TIMESTAMP    NOT NULL,
+    player1_hand                  VARCHAR(250)  NOT NULL DEFAULT '',
+    player2_hand                  VARCHAR(250)  NOT NULL DEFAULT '',
+    player1_stack                 VARCHAR(1600) NOT NULL DEFAULT '',
+    player2_stack                 VARCHAR(1600) NOT NULL DEFAULT '',
+    player1_field                 TEXT          NOT NULL DEFAULT '',
+    player2_field                 TEXT          NOT NULL DEFAULT '',
+    player1_graveyard             VARCHAR(1600) NOT NULL DEFAULT '',
+    player2_graveyard             VARCHAR(1600) NOT NULL DEFAULT '',
+    player1_summoning_confirmed   BOOLEAN       NOT NULL DEFAULT FALSE,
+    player2_summoning_confirmed   BOOLEAN       NOT NULL DEFAULT FALSE
 );
 
 CREATE TABLE IF NOT EXISTS player_season_stats (

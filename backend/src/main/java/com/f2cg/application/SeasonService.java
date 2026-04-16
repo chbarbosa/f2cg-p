@@ -27,7 +27,6 @@ public class SeasonService {
         this.playerSeasonStatsRepository = playerSeasonStatsRepository;
     }
 
-    @Cacheable("currentSeason")
     public Mono<Season> getCurrentSeason() {
         return seasonRepository.findByStatus("ACTIVE")
                 .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "No active season")))

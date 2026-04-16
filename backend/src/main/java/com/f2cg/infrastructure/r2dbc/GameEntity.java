@@ -37,6 +37,27 @@ public class GameEntity implements Persistable<Long> {
     @Column("created_at")
     private LocalDateTime createdAt;
 
+    @Column("player1_hand")
+    private String player1Hand;
+    @Column("player2_hand")
+    private String player2Hand;
+    @Column("player1_stack")
+    private String player1Stack;
+    @Column("player2_stack")
+    private String player2Stack;
+    @Column("player1_field")
+    private String player1Field;
+    @Column("player2_field")
+    private String player2Field;
+    @Column("player1_graveyard")
+    private String player1Graveyard;
+    @Column("player2_graveyard")
+    private String player2Graveyard;
+    @Column("player1_summoning_confirmed")
+    private boolean player1SummoningConfirmed;
+    @Column("player2_summoning_confirmed")
+    private boolean player2SummoningConfirmed;
+
     @Transient
     private boolean isNew;
 
@@ -57,6 +78,16 @@ public class GameEntity implements Persistable<Long> {
         this.player2Username = player2Username;
         this.status = status;
         this.createdAt = createdAt;
+        this.player1Hand = "";
+        this.player2Hand = "";
+        this.player1Stack = "";
+        this.player2Stack = "";
+        this.player1Field = "";
+        this.player2Field = "";
+        this.player1Graveyard = "";
+        this.player2Graveyard = "";
+        this.player1SummoningConfirmed = false;
+        this.player2SummoningConfirmed = false;
         this.isNew = true;
     }
 
@@ -90,4 +121,25 @@ public class GameEntity implements Persistable<Long> {
     public LocalDateTime getPlayer2Heartbeat() { return player2Heartbeat; }
     public void setPlayer2Heartbeat(LocalDateTime player2Heartbeat) { this.player2Heartbeat = player2Heartbeat; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+
+    public String getPlayer1Hand() { return player1Hand; }
+    public void setPlayer1Hand(String player1Hand) { this.player1Hand = player1Hand; }
+    public String getPlayer2Hand() { return player2Hand; }
+    public void setPlayer2Hand(String player2Hand) { this.player2Hand = player2Hand; }
+    public String getPlayer1Stack() { return player1Stack; }
+    public void setPlayer1Stack(String player1Stack) { this.player1Stack = player1Stack; }
+    public String getPlayer2Stack() { return player2Stack; }
+    public void setPlayer2Stack(String player2Stack) { this.player2Stack = player2Stack; }
+    public String getPlayer1Field() { return player1Field; }
+    public void setPlayer1Field(String player1Field) { this.player1Field = player1Field; }
+    public String getPlayer2Field() { return player2Field; }
+    public void setPlayer2Field(String player2Field) { this.player2Field = player2Field; }
+    public String getPlayer1Graveyard() { return player1Graveyard; }
+    public void setPlayer1Graveyard(String player1Graveyard) { this.player1Graveyard = player1Graveyard; }
+    public String getPlayer2Graveyard() { return player2Graveyard; }
+    public void setPlayer2Graveyard(String player2Graveyard) { this.player2Graveyard = player2Graveyard; }
+    public boolean isPlayer1SummoningConfirmed() { return player1SummoningConfirmed; }
+    public void setPlayer1SummoningConfirmed(boolean player1SummoningConfirmed) { this.player1SummoningConfirmed = player1SummoningConfirmed; }
+    public boolean isPlayer2SummoningConfirmed() { return player2SummoningConfirmed; }
+    public void setPlayer2SummoningConfirmed(boolean player2SummoningConfirmed) { this.player2SummoningConfirmed = player2SummoningConfirmed; }
 }

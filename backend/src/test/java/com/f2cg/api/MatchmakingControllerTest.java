@@ -39,6 +39,8 @@ class MatchmakingControllerTest extends BaseControllerTest {
         insertFreePhaseSeason();
         token1 = registerAndLogin(USER1);
         token2 = registerAndLogin(USER2);
+        setNickname(token1, "Player1");
+        setNickname(token2, "Player2");
         deck1 = createPlayableDeck(token1);
         deck2 = createPlayableDeck(token2);
     }
@@ -159,6 +161,8 @@ class MatchmakingControllerTest extends BaseControllerTest {
     void twoSeparatePairs_matchIndependently() {
         String token3 = registerAndLogin(USER3);
         String token4 = registerAndLogin(USER4);
+        setNickname(token3, "Player3");
+        setNickname(token4, "Player4");
         String deck3 = createPlayableDeck(token3);
         String deck4 = createPlayableDeck(token4);
 

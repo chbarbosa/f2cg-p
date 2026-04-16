@@ -7,9 +7,10 @@ import java.util.List;
 
 public record PlayerState(
         String playerId,
+        String username,
         List<FieldUnit> field,
         List<Card> hand,
+        List<Card> stack,
         List<Card> graveyard,
-        int deckSize,
         boolean summoningConfirmed
 ) {}

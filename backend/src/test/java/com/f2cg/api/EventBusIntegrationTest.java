@@ -114,15 +114,6 @@ class EventBusIntegrationTest extends BaseControllerTest {
 
     // --- helpers ---
 
-    private void setNickname(String authToken, String nickname) {
-        webTestClient.put().uri("/api/player/profile")
-                .contentType(MediaType.APPLICATION_JSON)
-                .header("Authorization", "Bearer " + authToken)
-                .bodyValue("{\"nickname\":\"" + nickname + "\"}")
-                .exchange()
-                .expectStatus().isNoContent();
-    }
-
     private String createPlayableDeck(String authToken) {
         String cardIdsJson = buildCardIdsJson(20);
         var result = webTestClient.post().uri(DECKS_URL)

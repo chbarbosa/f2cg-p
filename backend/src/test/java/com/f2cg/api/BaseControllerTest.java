@@ -67,6 +67,15 @@ abstract class BaseControllerTest {
         return "[" + ids + "]";
     }
 
+    protected void setNickname(String authToken, String nickname) {
+        webTestClient.put().uri("/api/player/profile")
+                .contentType(MediaType.APPLICATION_JSON)
+                .header("Authorization", "Bearer " + authToken)
+                .bodyValue("{\"nickname\":\"" + nickname + "\"}")
+                .exchange()
+                .expectStatus().isNoContent();
+    }
+
     protected String extractJsonField(String json, String field) {
         String search = "\"" + field + "\":\"";
         int start = json.indexOf(search) + search.length();

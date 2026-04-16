@@ -42,6 +42,7 @@ public class QueueService {
     private final PlayerRepository playerRepository;
     private final QueueSseBroadcaster sseBroadcaster;
     private final EventBus eventBus;
+    private final GameInitService gameInitService;
 
     @Value("${game.queue.timeout-seconds}")
     private int timeoutSeconds;
@@ -54,7 +55,8 @@ public class QueueService {
                         GameRepository gameRepository,
                         PlayerRepository playerRepository,
                         QueueSseBroadcaster sseBroadcaster,
-                        EventBus eventBus) {
+                        EventBus eventBus,
+                        GameInitService gameInitService) {
         this.queueEntryRepository = queueEntryRepository;
         this.deckRepository = deckRepository;
         this.seasonService = seasonService;
@@ -64,6 +66,7 @@ public class QueueService {
         this.playerRepository = playerRepository;
         this.sseBroadcaster = sseBroadcaster;
         this.eventBus = eventBus;
+        this.gameInitService = gameInitService;
     }
 
     public Mono<QueueEntry> joinQueue(String playerId, String deckId) {
@@ -153,6 +156,12 @@ public class QueueService {
                                             AppEventType.GAME_CREATION_TIMED,
                                             p1.getId(), gamePublicId, "GAME",
                                             gameRepository.save(game)
+                                                    .flatMap(savedGame ->
+                                                            gameInitService.initializeGame(
+                                                                    savedGame,
+                                                                    joiner.getDeckId(),
+                                                                    opponent.getDeckId()
+                                                            ).thenReturn(savedGame))
                                                     .flatMap(savedGame -> {
                                                         joiner.setStatus(QueueStatus.MATCHED.name());
                                                         return queueEntryRepository.save(joiner)
