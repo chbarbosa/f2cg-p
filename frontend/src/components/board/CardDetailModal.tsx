@@ -6,6 +6,7 @@ interface Props {
   card: Card | null;
   fieldUnit?: FieldUnit;
   onClose: () => void;
+  onAction?: (cardId: string) => void;
 }
 
 function formatEffect(type: EffectType, value: number): string {
@@ -17,7 +18,7 @@ function formatEffect(type: EffectType, value: number): string {
   }
 }
 
-export function CardDetailModal({ card, fieldUnit, onClose }: Props) {
+export function CardDetailModal({ card, fieldUnit, onClose, onAction }: Props) {
   useEffect(() => {
     if (!card) return;
     const handleKey = (e: KeyboardEvent) => {
@@ -126,6 +127,28 @@ export function CardDetailModal({ card, fieldUnit, onClose }: Props) {
             </>
           )}
         </div>
+
+        {/* Action button — only for hand cards (no fieldUnit) */}
+        {!fieldUnit && (
+          <div className="card-modal__action-row">
+            {card.type === 'UNIT' && (
+              <button
+                className="card-modal__action-btn card-modal__action-btn--invoke"
+                onClick={() => onAction?.(card.id)}
+              >
+                Invoke
+              </button>
+            )}
+            {(card.type === 'BUFF' || card.type === 'DEBUFF') && (
+              <button
+                className="card-modal__action-btn card-modal__action-btn--cast"
+                onClick={() => onAction?.(card.id)}
+              >
+                Cast
+              </button>
+            )}
+          </div>
+        )}
 
         {/* Footer: ATK / DEF pinned at bottom (units only) */}
         {card.type === 'UNIT' && (

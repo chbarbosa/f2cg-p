@@ -2,6 +2,8 @@ package com.f2cg.api;
 
 import com.f2cg.api.dto.GameResponse;
 import com.f2cg.application.GameService;
+import com.f2cg.application.GameStateLoader;
+import com.f2cg.application.PlayerGameStateView;
 import com.f2cg.infrastructure.JwtUtil;
 import com.f2cg.infrastructure.r2dbc.GameRepository;
 import org.springframework.http.HttpStatus;
@@ -21,11 +23,14 @@ public class GameController {
 
     private final GameRepository gameRepository;
     private final GameService gameService;
+    private final GameStateLoader gameStateLoader;
     private final JwtUtil jwtUtil;
 
-    public GameController(GameRepository gameRepository, GameService gameService, JwtUtil jwtUtil) {
+    public GameController(GameRepository gameRepository, GameService gameService,
+                          GameStateLoader gameStateLoader, JwtUtil jwtUtil) {
         this.gameRepository = gameRepository;
         this.gameService = gameService;
+        this.gameStateLoader = gameStateLoader;
         this.jwtUtil = jwtUtil;
     }
 
@@ -42,6 +47,22 @@ public class GameController {
                         return Mono.error(new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied"));
                     }
                     return Mono.just(GameResponse.from(game));
+                });
+    }
+
+    @GetMapping("/{publicId}/state")
+    public Mono<PlayerGameStateView> getGameState(@PathVariable String publicId,
+                                                  @RequestHeader("Authorization") String authHeader) {
+        String playerId = jwtUtil.extractPlayerIdFromHeader(authHeader);
+        return gameRepository.findByPublicId(publicId)
+                .switchIfEmpty(Mono.error(new ResponseStatusException(HttpStatus.NOT_FOUND, "Game not found")))
+                .flatMap(game -> {
+                    boolean isParticipant = playerId.equals(game.getPlayer1Id())
+                            || playerId.equals(game.getPlayer2Id());
+                    if (!isParticipant) {
+                        return Mono.error(new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied"));
+                    }
+                    return gameStateLoader.loadView(game, playerId);
                 });
     }
 

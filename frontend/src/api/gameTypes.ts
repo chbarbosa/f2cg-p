@@ -72,6 +72,36 @@ export interface BoardOpponent {
   graveyard: Card[];
 }
 
+export interface PlayerMeView {
+  playerId: string;
+  username: string;
+  hand: Card[];
+  stackSize: number;
+  field: FieldUnit[];
+  graveyard: Card[];
+  summoningConfirmed: boolean;
+}
+
+export interface PlayerOpponentView {
+  playerId: string;
+  username: string;
+  handSize: number;
+  stackSize: number;
+  field: FieldUnit[];
+  graveyard: Card[];
+  summoningConfirmed: boolean;
+}
+
+export interface PlayerGameStateView {
+  gameId: string;
+  turnNumber: number;
+  currentMana: number;
+  phase: GamePhase;
+  activePlayerId: string;
+  me: PlayerMeView;
+  opponent: PlayerOpponentView;
+}
+
 export interface GameBoardProps {
   gameId: string;
   currentPlayerId: string;

@@ -303,3 +303,39 @@
   height: 32px;
   background: var(--color-border);
 }
+
+/* ===== ACTION ROW: Invoke / Cast ===== */
+.card-modal__action-row {
+  flex-shrink: 0;
+  padding: 10px 16px;
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  justify-content: center;
+}
+
+.card-modal__action-btn {
+  width: 100%;
+  padding: 10px 0;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.card-modal__action-btn:hover {
+  opacity: 0.85;
+}
+
+.card-modal__action-btn--invoke {
+  background: var(--color-accent-yellow);
+  color: #1e1e2e;
+}
+
+.card-modal__action-btn--cast {
+  background: var(--color-accent-blue);
+  color: #1e1e2e;
+}
