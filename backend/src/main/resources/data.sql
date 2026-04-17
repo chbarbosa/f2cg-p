@@ -102,7 +102,7 @@ VALUES
 
 -- ============================================================
 
--- WARRIOR cards (31: 20 units, 6 buffs, 5 debuffs)
+-- WARRIOR cards (35: 22 units, 7 buffs, 6 debuffs)
 INSERT INTO cards (id, name, mana_cost, card_type, theme, unit_class, attack, defense, effect_type, effect_value) VALUES
 ('w-u-01', 'Iron Knight',      3, 'UNIT',   'WARRIOR', 'WARRIOR', 4, 5, NULL, NULL),
 ('w-u-02', 'Shield Bearer',    2, 'UNIT',   'WARRIOR', 'WARRIOR', 2, 6, NULL, NULL),
@@ -134,9 +134,13 @@ INSERT INTO cards (id, name, mana_cost, card_type, theme, unit_class, attack, de
 ('w-d-02', 'Armor Crack',      2, 'DEBUFF', 'WARRIOR', NULL, NULL, NULL, 'DEF_REDUCTION', 3),
 ('w-d-03', 'Demoralize',       2, 'DEBUFF', 'WARRIOR', NULL, NULL, NULL, 'ATK_REDUCTION', 2),
 ('w-d-04', 'Break Shield',     3, 'DEBUFF', 'WARRIOR', NULL, NULL, NULL, 'DEF_REDUCTION', 4),
-('w-d-05', 'Cripple',          3, 'DEBUFF', 'WARRIOR', NULL, NULL, NULL, 'ATK_REDUCTION', 3);
+('w-d-05', 'Cripple',          3, 'DEBUFF', 'WARRIOR', NULL, NULL, NULL, 'ATK_REDUCTION', 3),
+('w-u-21', 'Steel Juggernaut', 5, 'UNIT',   'WARRIOR', 'WARRIOR', 8, 3, NULL, NULL),
+('w-u-22', 'Sentinel',         2, 'UNIT',   'WARRIOR', 'WARRIOR', 3, 5, NULL, NULL),
+('w-b-07', 'Battle Hymn',      2, 'BUFF',   'WARRIOR', NULL, NULL, NULL, 'ATK_BOOST', 2),
+('w-d-06', 'Shatter',          2, 'DEBUFF', 'WARRIOR', NULL, NULL, NULL, 'DEF_REDUCTION', 2);
 
--- MAGE cards (31: 20 units, 6 buffs, 5 debuffs)
+-- MAGE cards (35: 22 units, 7 buffs, 6 debuffs)
 INSERT INTO cards (id, name, mana_cost, card_type, theme, unit_class, attack, defense, effect_type, effect_value) VALUES
 ('m-u-01', 'Fire Apprentice',  2, 'UNIT',   'MAGE', 'MAGE', 3, 2, NULL, NULL),
 ('m-u-02', 'Ice Witch',        3, 'UNIT',   'MAGE', 'MAGE', 3, 4, NULL, NULL),
@@ -168,9 +172,13 @@ INSERT INTO cards (id, name, mana_cost, card_type, theme, unit_class, attack, de
 ('m-d-02', 'Silence',          2, 'DEBUFF', 'MAGE', NULL, NULL, NULL, 'DEF_REDUCTION', 2),
 ('m-d-03', 'Arcane Shock',     3, 'DEBUFF', 'MAGE', NULL, NULL, NULL, 'ATK_REDUCTION', 3),
 ('m-d-04', 'Frostbite',        1, 'DEBUFF', 'MAGE', NULL, NULL, NULL, 'ATK_REDUCTION', 2),
-('m-d-05', 'Nullify',          2, 'DEBUFF', 'MAGE', NULL, NULL, NULL, 'DEF_REDUCTION', 3);
+('m-d-05', 'Nullify',          2, 'DEBUFF', 'MAGE', NULL, NULL, NULL, 'DEF_REDUCTION', 3),
+('m-u-21', 'Astral Titan',     5, 'UNIT',   'MAGE', 'MAGE', 7, 4, NULL, NULL),
+('m-u-22', 'Apprentice Scout', 2, 'UNIT',   'MAGE', 'MAGE', 3, 3, NULL, NULL),
+('m-b-07', 'Spell Focus',      2, 'BUFF',   'MAGE', NULL, NULL, NULL, 'ATK_BOOST', 2),
+('m-d-06', 'Mind Break',       2, 'DEBUFF', 'MAGE', NULL, NULL, NULL, 'DEF_REDUCTION', 2);
 
--- CLERIC cards (31: 20 units, 6 buffs, 5 debuffs)
+-- CLERIC cards (35: 22 units, 7 buffs, 6 debuffs)
 INSERT INTO cards (id, name, mana_cost, card_type, theme, unit_class, attack, defense, effect_type, effect_value) VALUES
 ('c-u-01', 'Holy Knight',      3, 'UNIT',   'CLERIC', 'CLERIC', 4, 5, NULL, NULL),
 ('c-u-02', 'Temple Guard',     3, 'UNIT',   'CLERIC', 'CLERIC', 3, 6, NULL, NULL),
@@ -202,4 +210,8 @@ INSERT INTO cards (id, name, mana_cost, card_type, theme, unit_class, attack, de
 ('c-d-02', 'Curse',            2, 'DEBUFF', 'CLERIC', NULL, NULL, NULL, 'DEF_REDUCTION', 2),
 ('c-d-03', 'Holy Wrath',       3, 'DEBUFF', 'CLERIC', NULL, NULL, NULL, 'ATK_REDUCTION', 3),
 ('c-d-04', 'Condemn',          2, 'DEBUFF', 'CLERIC', NULL, NULL, NULL, 'DEF_REDUCTION', 3),
-('c-d-05', 'Judgment',         3, 'DEBUFF', 'CLERIC', NULL, NULL, NULL, 'ATK_REDUCTION', 2);
+('c-d-05', 'Judgment',         3, 'DEBUFF', 'CLERIC', NULL, NULL, NULL, 'ATK_REDUCTION', 2),
+('c-u-21', 'Exarch',           5, 'UNIT',   'CLERIC', 'CLERIC', 5, 7, NULL, NULL),
+('c-u-22', 'Novice Acolyte',   2, 'UNIT',   'CLERIC', 'CLERIC', 2, 4, NULL, NULL),
+('c-b-07', 'Fortify',          2, 'BUFF',   'CLERIC', NULL, NULL, NULL, 'DEF_BOOST', 2),
+('c-d-06', 'Enfeeble',         2, 'DEBUFF', 'CLERIC', NULL, NULL, NULL, 'ATK_REDUCTION', 2);
